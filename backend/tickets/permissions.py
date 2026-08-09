@@ -1,9 +1,9 @@
 from rest_framework.permissions import BasePermission
 
-from users.models import User
+from organizations.models import OrganizationMembership
 
 
-class IsTicketOwnerOrAgent(BasePermission):
+class IsTicketOwnerOrOrganizationStaff(BasePermission):
     message = "You do not have permission to access this ticket."
 
     def has_object_permission(self, request, view, obj):
@@ -15,7 +15,22 @@ class IsTicketOwnerOrAgent(BasePermission):
         if user.is_staff:
             return True
 
-        if user.role == User.Role.AGENT:
+        membership = OrganizationMembership.objects.filter(
+            organization=obj.organization,
+            user=user,
+            is_active=True,
+        ).first()
+
+        if membership is None:
+            return False
+
+        if membership.role in (
+            OrganizationMembership.Role.ADMIN,
+            OrganizationMembership.Role.AGENT,
+        ):
             return True
 
-        return obj.customer_id == user.id
+        if membership.role == OrganizationMembership.Role.CUSTOMER:
+            return obj.customer_id == user.id
+
+        return False

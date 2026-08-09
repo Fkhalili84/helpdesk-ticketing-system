@@ -1,21 +1,50 @@
 from django.utils import timezone
 from rest_framework import serializers
 
+from organizations.models import OrganizationMembership
 from users.models import User
 
-from .models import Ticket, TicketCategory, TicketMessage
+from .models import (
+    Ticket,
+    TicketCategory,
+    TicketMessage,
+)
+
 
 class TicketCategorySerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(
+        source="organization.name",
+        read_only=True,
+    )
+
     class Meta:
         model = TicketCategory
+
         fields = (
             "id",
             "name",
             "description",
+            "organization",
+            "organization_name",
+        )
+
+        read_only_fields = (
+            "id",
+            "organization",
+            "organization_name",
         )
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    organization = serializers.PrimaryKeyRelatedField(
+        read_only=True,
+    )
+
+    organization_name = serializers.CharField(
+        source="organization.name",
+        read_only=True,
+    )
+
     customer = serializers.PrimaryKeyRelatedField(
         read_only=True,
     )
@@ -26,10 +55,7 @@ class TicketSerializer(serializers.ModelSerializer):
     )
 
     assigned_agent = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(
-            role=User.Role.AGENT,
-            is_active=True,
-        ),
+        queryset=User.objects.none(),
         allow_null=True,
         required=False,
     )
@@ -49,6 +75,8 @@ class TicketSerializer(serializers.ModelSerializer):
 
         fields = (
             "id",
+            "organization",
+            "organization_name",
             "title",
             "description",
             "customer",
@@ -67,6 +95,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
         read_only_fields = (
             "id",
+            "organization",
             "customer",
             "created_at",
             "updated_at",
@@ -74,20 +103,78 @@ class TicketSerializer(serializers.ModelSerializer):
             "closed_at",
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        view = self.context.get("view")
+
+        if view is None:
+            return
+
+        if not hasattr(view, "get_organization"):
+            return
+
+        view_kwargs = getattr(view, "kwargs", {})
+
+        if "organization_slug" not in view_kwargs:
+            return
+
+        organization = view.get_organization()
+
+        # Only active agents of the current organization
+        # can be assigned to a ticket.
+        self.fields["assigned_agent"].queryset = User.objects.filter(
+            organization_memberships__organization=organization,
+            organization_memberships__role=OrganizationMembership.Role.AGENT,
+            organization_memberships__is_active=True,
+            is_active=True,
+        ).distinct()
+
+        # A ticket can only use categories that belong
+        # to the current organization.
+        self.fields["category"].queryset = TicketCategory.objects.filter(
+            organization=organization,
+        )
+
     def validate(self, attrs):
         request = self.context.get("request")
+        view = self.context.get("view")
 
-        if not request or not request.user.is_authenticated:
+        if (
+            request is None
+            or not request.user.is_authenticated
+            or view is None
+            or not hasattr(view, "get_organization")
+        ):
             return attrs
 
         user = request.user
-        submitted_fields = set(self.initial_data.keys())
 
+        # Django/platform admins are not restricted by
+        # organization membership roles.
         if user.is_staff:
             return attrs
 
-        if user.role == User.Role.CUSTOMER:
+        organization = view.get_organization()
+
+        membership = OrganizationMembership.objects.filter(
+            organization=organization,
+            user=user,
+            is_active=True,
+        ).first()
+
+        if membership is None:
+            raise serializers.ValidationError({
+                "detail": "You are not a member of this organization."
+            })
+
+        submitted_fields = set(self.initial_data.keys())
+
+        # Customers manage the content of their own tickets,
+        # but operational fields belong to support staff.
+        if membership.role == OrganizationMembership.Role.CUSTOMER:
             forbidden_fields = {
+                "organization",
                 "customer",
                 "assigned_agent",
                 "priority",
@@ -106,8 +193,14 @@ class TicketSerializer(serializers.ModelSerializer):
                     )
                 })
 
-        elif user.role == User.Role.AGENT:
+        # Agents and organization admins manage operational fields,
+        # but should not rewrite customer-created ticket content.
+        elif membership.role in (
+            OrganizationMembership.Role.AGENT,
+            OrganizationMembership.Role.ADMIN,
+        ):
             forbidden_fields = {
+                "organization",
                 "customer",
                 "title",
                 "description",
@@ -120,7 +213,7 @@ class TicketSerializer(serializers.ModelSerializer):
             if invalid_fields:
                 raise serializers.ValidationError({
                     "detail": (
-                        "Support agents cannot modify these fields: "
+                        "Organization staff cannot modify these fields: "
                         + ", ".join(sorted(invalid_fields))
                     )
                 })
@@ -138,10 +231,17 @@ class TicketSerializer(serializers.ModelSerializer):
             if instance.closed_at is None:
                 instance.closed_at = timezone.now()
 
-        return super().update(instance, validated_data)
-    
+        return super().update(
+            instance,
+            validated_data,
+        )
+
 
 class TicketMessageSerializer(serializers.ModelSerializer):
+    sender = serializers.PrimaryKeyRelatedField(
+        read_only=True,
+    )
+
     sender_username = serializers.CharField(
         source="sender.username",
         read_only=True,
@@ -149,6 +249,7 @@ class TicketMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TicketMessage
+
         fields = (
             "id",
             "ticket",

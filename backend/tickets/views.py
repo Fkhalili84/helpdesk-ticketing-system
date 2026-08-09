@@ -1,58 +1,118 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, viewsets
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 
-from users.models import User
-from users.permissions import IsCustomer
+from organizations.models import (
+    Organization,
+    OrganizationMembership,
+)
+from organizations.permissions import (
+    IsOrganizationCustomer,
+    IsOrganizationMember,
+)
 
-from .models import Ticket, TicketCategory, TicketMessage
-from .permissions import IsTicketOwnerOrAgent
+from .models import (
+    Ticket,
+    TicketCategory,
+    TicketMessage,
+)
+from .permissions import IsTicketOwnerOrOrganizationStaff
 from .serializers import (
     TicketCategorySerializer,
     TicketMessageSerializer,
     TicketSerializer,
 )
 
-class TicketCategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = TicketCategory.objects.all().order_by("name")
+
+class OrganizationMixin:
+    def get_organization(self):
+        if not hasattr(self, "_organization"):
+            self._organization = get_object_or_404(
+                Organization,
+                slug=self.kwargs["organization_slug"],
+                is_active=True,
+            )
+
+        return self._organization
+
+    def get_membership(self):
+        if self.request.user.is_staff:
+            return None
+
+        return OrganizationMembership.objects.filter(
+            organization=self.get_organization(),
+            user=self.request.user,
+            is_active=True,
+        ).first()
+
+
+class TicketCategoryViewSet(
+    OrganizationMixin,
+    viewsets.ReadOnlyModelViewSet,
+):
     serializer_class = TicketCategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated,
+        IsOrganizationMember,
+    ]
+
+    def get_queryset(self):
+        return TicketCategory.objects.filter(
+            organization=self.get_organization(),
+        ).order_by("name")
 
 
-class TicketViewSet(viewsets.ModelViewSet):
+class TicketViewSet(
+    OrganizationMixin,
+    viewsets.ModelViewSet,
+):
     serializer_class = TicketSerializer
 
     def get_queryset(self):
-        user = self.request.user
+        organization = self.get_organization()
 
-        queryset = Ticket.objects.select_related(
+        queryset = Ticket.objects.filter(
+            organization=organization,
+        ).select_related(
+            "organization",
             "customer",
             "assigned_agent",
             "category",
         )
 
-        if user.is_staff or user.role == User.Role.AGENT:
+        user = self.request.user
+
+        if user.is_staff:
             return queryset
 
-        return queryset.filter(customer=user)
+        membership = self.get_membership()
+
+        if membership is None:
+            return queryset.none()
+
+        if membership.role in (
+            OrganizationMembership.Role.ADMIN,
+            OrganizationMembership.Role.AGENT,
+        ):
+            return queryset
+
+        return queryset.filter(
+            customer=user,
+        )
 
     def get_permissions(self):
         if self.action == "create":
             permission_classes = [
                 IsAuthenticated,
-                IsCustomer,
-            ]
-
-        elif self.action == "destroy":
-            permission_classes = [
-                IsAdminUser,
+                IsOrganizationCustomer,
             ]
 
         else:
             permission_classes = [
                 IsAuthenticated,
-                IsTicketOwnerOrAgent,
+                IsOrganizationMember,
+                IsTicketOwnerOrOrganizationStaff,
             ]
 
         return [
@@ -62,22 +122,32 @@ class TicketViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(
+            organization=self.get_organization(),
             customer=self.request.user,
         )
 
 
-class TicketMessageListCreateView(generics.ListCreateAPIView):
+class TicketMessageListCreateView(
+    OrganizationMixin,
+    generics.ListCreateAPIView,
+):
     serializer_class = TicketMessageSerializer
+
     permission_classes = [
         IsAuthenticated,
-        IsTicketOwnerOrAgent,
+        IsOrganizationMember,
+        IsTicketOwnerOrOrganizationStaff,
     ]
 
     def get_ticket(self):
         if not hasattr(self, "_ticket"):
             ticket = get_object_or_404(
-                Ticket.objects.select_related("customer"),
+                Ticket.objects.select_related(
+                    "organization",
+                    "customer",
+                ),
                 pk=self.kwargs["ticket_id"],
+                organization=self.get_organization(),
             )
 
             self.check_object_permissions(
@@ -90,11 +160,11 @@ class TicketMessageListCreateView(generics.ListCreateAPIView):
         return self._ticket
 
     def get_queryset(self):
-        ticket = self.get_ticket()
-
         return TicketMessage.objects.filter(
-            ticket=ticket,
-        ).select_related("sender")
+            ticket=self.get_ticket(),
+        ).select_related(
+            "sender",
+        )
 
     def perform_create(self, serializer):
         serializer.save(
