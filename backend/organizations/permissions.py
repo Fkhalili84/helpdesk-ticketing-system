@@ -63,3 +63,24 @@ class IsOrganizationAgentOrAdmin(BasePermission):
             ],
             is_active=True,
         ).exists()
+
+
+
+class IsOrganizationAdmin(BasePermission):
+    message = "Only organization admins can perform this action."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if request.user.is_staff:
+            return True
+
+        organization = view.get_organization()
+
+        return OrganizationMembership.objects.filter(
+            organization=organization,
+            user=request.user,
+            role=OrganizationMembership.Role.ADMIN,
+            is_active=True,
+        ).exists()

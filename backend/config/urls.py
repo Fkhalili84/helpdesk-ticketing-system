@@ -15,7 +15,17 @@ urlpatterns = [
 
     path(
         "api/organizations/<slug:organization_slug>/",
+        include("organizations.urls"),
+    ),
+
+    path(
+        "api/organizations/<slug:organization_slug>/",
         include("tickets.urls"),
+    ),
+
+    path(
+        "api/invitations/",
+        include("organizations.invitation_urls"),
     ),
 
     path(
