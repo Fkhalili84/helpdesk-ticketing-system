@@ -5,8 +5,11 @@ from .models import Ticket, TicketCategory, TicketMessage
 
 @admin.register(TicketCategory)
 class TicketCategoryAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "created_at")
+    list_display = ("id", "name", "organization", "created_at")
     search_fields = ("name",)
+    list_filter = (
+        "organization",
+    )
 
 
 @admin.register(Ticket)
@@ -14,6 +17,7 @@ class TicketAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "title",
+        "organization",
         "customer",
         "assigned_agent",
         "category",
@@ -23,6 +27,7 @@ class TicketAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
+        "organization",
         "status",
         "priority",
         "category",

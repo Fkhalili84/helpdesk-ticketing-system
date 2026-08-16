@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "users",
     "core",
     "tickets",
+    "organizations",
 ]
 
 MIDDLEWARE = [
