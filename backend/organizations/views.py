@@ -7,6 +7,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from users.serializers import CustomerRegisterSerializer
 
 from .models import (
     Organization,
@@ -133,3 +134,18 @@ class InvitationAcceptView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+    
+
+class CustomerRegisterView(
+    OrganizationMixin,
+    generics.CreateAPIView,
+):
+    serializer_class = CustomerRegisterSerializer
+    permission_classes = [AllowAny]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+
+        context["organization"] = self.get_organization()
+
+        return context

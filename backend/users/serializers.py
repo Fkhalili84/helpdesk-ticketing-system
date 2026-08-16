@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
 
 from rest_framework import serializers
 
@@ -9,7 +10,7 @@ from organizations.models import OrganizationMembership
 User = get_user_model()
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class CustomerRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
         validators=[validate_password],
@@ -21,12 +22,39 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+
         fields = (
             "username",
             "email",
+            "first_name",
+            "last_name",
             "password",
             "password_confirm",
         )
+
+    def validate_username(self, value):
+        value = value.strip()
+
+        if User.objects.filter(
+            username__iexact=value,
+        ).exists():
+            raise serializers.ValidationError(
+                "A user with this username already exists."
+            )
+
+        return value
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+
+        if User.objects.filter(
+            email__iexact=email,
+        ).exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
+
+        return email
 
     def validate(self, attrs):
         if attrs["password"] != attrs["password_confirm"]:
@@ -36,12 +64,34 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
+        organization = self.context["organization"]
+
         validated_data.pop("password_confirm")
 
-        return User.objects.create_user(
-            **validated_data,
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            first_name=validated_data.get(
+                "first_name",
+                "",
+            ),
+            last_name=validated_data.get(
+                "last_name",
+                "",
+            ),
+            password=validated_data["password"],
         )
+
+        OrganizationMembership.objects.create(
+            organization=organization,
+            user=user,
+            role=OrganizationMembership.Role.CUSTOMER,
+            is_active=True,
+        )
+
+        return user
 
 
 class MembershipSerializer(serializers.ModelSerializer):
@@ -62,6 +112,7 @@ class MembershipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrganizationMembership
+
         fields = (
             "organization_id",
             "organization_name",
