@@ -14,6 +14,11 @@ urlpatterns = [
     ),
 
     path(
+        "api/organizations/",
+        include("organizations.public_urls"),
+    ),
+
+    path(
         "api/organizations/<slug:organization_slug>/",
         include("organizations.urls"),
     ),

@@ -20,7 +20,49 @@ from .permissions import IsOrganizationAdmin
 from .serializers import (
     InvitationAcceptSerializer,
     OrganizationInvitationSerializer,
+    OrganizationOnboardingSerializer,
 )
+
+
+class OrganizationOnboardingView(
+    generics.CreateAPIView,
+):
+    serializer_class = OrganizationOnboardingSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data,
+        )
+
+        serializer.is_valid(
+            raise_exception=True,
+        )
+
+        result = serializer.save()
+
+        user = result["user"]
+        organization = result["organization"]
+
+        return Response(
+            {
+                "message": "Organization created successfully.",
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+                "organization": {
+                    "id": organization.id,
+                    "name": organization.name,
+                    "slug": organization.slug,
+                },
+                "role": OrganizationMembership.Role.ADMIN,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 class OrganizationMixin:
     def get_organization(self):

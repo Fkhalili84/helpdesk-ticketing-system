@@ -6,13 +6,138 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import (
+    Organization,
     OrganizationInvitation,
     OrganizationMembership,
 )
 
-
 User = get_user_model()
 
+
+class OrganizationOnboardingSerializer(serializers.Serializer):
+    organization_name = serializers.CharField(
+        max_length=150,
+    )
+
+    organization_slug = serializers.SlugField(
+        max_length=160,
+    )
+
+    username = serializers.CharField(
+        max_length=150,
+    )
+
+    email = serializers.EmailField()
+
+    first_name = serializers.CharField(
+        max_length=150,
+        required=False,
+        allow_blank=True,
+    )
+
+    last_name = serializers.CharField(
+        max_length=150,
+        required=False,
+        allow_blank=True,
+    )
+
+    password = serializers.CharField(
+        write_only=True,
+        validators=[validate_password],
+    )
+
+    password_confirm = serializers.CharField(
+        write_only=True,
+    )
+
+    def validate_organization_slug(self, value):
+        value = value.strip().lower()
+
+        if Organization.objects.filter(
+            slug__iexact=value,
+        ).exists():
+            raise serializers.ValidationError(
+                "An organization with this slug already exists."
+            )
+
+        return value
+
+    def validate_username(self, value):
+        value = value.strip()
+
+        if User.objects.filter(
+            username__iexact=value,
+        ).exists():
+            raise serializers.ValidationError(
+                "A user with this username already exists."
+            )
+
+        return value
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+
+        if User.objects.filter(
+            email__iexact=email,
+        ).exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
+
+        return email
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password_confirm"]:
+            raise serializers.ValidationError({
+                "password_confirm": "Passwords do not match."
+            })
+
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        validated_data.pop("password_confirm")
+
+        organization_name = validated_data.pop(
+            "organization_name"
+        )
+
+        organization_slug = validated_data.pop(
+            "organization_slug"
+        )
+
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            first_name=validated_data.get(
+                "first_name",
+                "",
+            ),
+            last_name=validated_data.get(
+                "last_name",
+                "",
+            ),
+            password=validated_data["password"],
+        )
+
+        organization = Organization.objects.create(
+            name=organization_name,
+            slug=organization_slug,
+            created_by=user,
+            is_active=True,
+        )
+
+        OrganizationMembership.objects.create(
+            organization=organization,
+            user=user,
+            role=OrganizationMembership.Role.ADMIN,
+            is_active=True,
+        )
+
+        return {
+            "user": user,
+            "organization": organization,
+        }
 
 class OrganizationInvitationSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(

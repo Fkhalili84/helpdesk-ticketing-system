@@ -593,3 +593,267 @@ class InvitationAcceptanceTests(TestCase):
                 username="new_agent",
             ).exists()
         )
+
+
+class OrganizationOnboardingTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.onboarding_url = reverse(
+            "organization-onboarding",
+        )
+
+        self.valid_payload = {
+            "organization_name": "CloudDesk",
+            "organization_slug": "clouddesk",
+            "username": "clouddesk_admin",
+            "email": "admin@clouddesk.test",
+            "first_name": "Sara",
+            "last_name": "Ahmadi",
+            "password": "StrongPassword123!",
+            "password_confirm": "StrongPassword123!",
+        }
+
+    def test_organization_onboarding_creates_user_organization_and_admin_membership(
+        self,
+    ):
+        response = self.client.post(
+            self.onboarding_url,
+            self.valid_payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+        user = User.objects.get(
+            username="clouddesk_admin",
+        )
+
+        organization = Organization.objects.get(
+            slug="clouddesk",
+        )
+
+        membership = OrganizationMembership.objects.get(
+            organization=organization,
+            user=user,
+        )
+
+        self.assertEqual(
+            organization.name,
+            "CloudDesk",
+        )
+
+        self.assertEqual(
+            organization.created_by,
+            user,
+        )
+
+        self.assertTrue(
+            organization.is_active,
+        )
+
+        self.assertEqual(
+            membership.role,
+            OrganizationMembership.Role.ADMIN,
+        )
+
+        self.assertTrue(
+            membership.is_active,
+        )
+
+    def test_onboarding_response_contains_created_organization_and_admin_role(
+        self,
+    ):
+        response = self.client.post(
+            self.onboarding_url,
+            self.valid_payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+        self.assertEqual(
+            response.data["user"]["username"],
+            "clouddesk_admin",
+        )
+
+        self.assertEqual(
+            response.data["organization"]["name"],
+            "CloudDesk",
+        )
+
+        self.assertEqual(
+            response.data["organization"]["slug"],
+            "clouddesk",
+        )
+
+        self.assertEqual(
+            response.data["role"],
+            OrganizationMembership.Role.ADMIN,
+        )
+
+    def test_duplicate_organization_slug_is_rejected(self):
+        Organization.objects.create(
+            name="Existing Company",
+            slug="clouddesk",
+        )
+
+        response = self.client.post(
+            self.onboarding_url,
+            self.valid_payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertFalse(
+            User.objects.filter(
+                username="clouddesk_admin",
+            ).exists()
+        )
+
+    def test_duplicate_username_is_rejected(self):
+        User.objects.create_user(
+            username="clouddesk_admin",
+            email="existing@example.com",
+            password="StrongPassword123!",
+        )
+
+        response = self.client.post(
+            self.onboarding_url,
+            self.valid_payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertFalse(
+            Organization.objects.filter(
+                slug="clouddesk",
+            ).exists()
+        )
+
+    def test_duplicate_email_is_rejected(self):
+        User.objects.create_user(
+            username="existing_user",
+            email="admin@clouddesk.test",
+            password="StrongPassword123!",
+        )
+
+        response = self.client.post(
+            self.onboarding_url,
+            self.valid_payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertFalse(
+            Organization.objects.filter(
+                slug="clouddesk",
+            ).exists()
+        )
+
+    def test_password_mismatch_is_rejected(self):
+        payload = self.valid_payload.copy()
+
+        payload["password_confirm"] = (
+            "DifferentPassword123!"
+        )
+
+        response = self.client.post(
+            self.onboarding_url,
+            payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertFalse(
+            User.objects.filter(
+                username="clouddesk_admin",
+            ).exists()
+        )
+
+        self.assertFalse(
+            Organization.objects.filter(
+                slug="clouddesk",
+            ).exists()
+        )
+
+    def test_created_admin_can_invite_agent(self):
+        onboarding_response = self.client.post(
+            self.onboarding_url,
+            self.valid_payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            onboarding_response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+        admin_user = User.objects.get(
+            username="clouddesk_admin",
+        )
+
+        self.client.force_authenticate(
+            user=admin_user,
+        )
+
+        invitation_url = reverse(
+            "organization-invitation-list",
+            kwargs={
+                "organization_slug": "clouddesk",
+            },
+        )
+
+        response = self.client.post(
+            invitation_url,
+            {
+                "email": "agent@clouddesk.test",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+        invitation = OrganizationInvitation.objects.get(
+            email="agent@clouddesk.test",
+        )
+
+        self.assertEqual(
+            invitation.organization.slug,
+            "clouddesk",
+        )
+
+        self.assertEqual(
+            invitation.invited_by,
+            admin_user,
+        )
+
+        self.assertEqual(
+            invitation.role,
+            OrganizationMembership.Role.AGENT,
+        )
