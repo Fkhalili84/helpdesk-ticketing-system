@@ -147,10 +147,10 @@ class TicketMessage(models.Model):
         return f"Message on Ticket #{self.ticket_id} by {self.sender}"
     
 
-organization = models.ForeignKey(
-    Organization,
-    on_delete=models.CASCADE,
-    related_name="ticket_categories",
-    null=True,
-    blank=True,
-)
+# organization = models.ForeignKey(
+#     Organization,
+#     on_delete=models.CASCADE,
+#     related_name="ticket_categories",
+#     null=True,
+#     blank=True,
+# )

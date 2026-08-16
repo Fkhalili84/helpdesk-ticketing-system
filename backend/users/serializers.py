@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+
 from rest_framework import serializers
+
+from organizations.models import OrganizationMembership
 
 
 User = get_user_model()
@@ -37,25 +40,67 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop("password_confirm")
 
         return User.objects.create_user(
-            role=User.Role.CUSTOMER,
             **validated_data,
         )
 
 
+class MembershipSerializer(serializers.ModelSerializer):
+    organization_id = serializers.IntegerField(
+        source="organization.id",
+        read_only=True,
+    )
+
+    organization_name = serializers.CharField(
+        source="organization.name",
+        read_only=True,
+    )
+
+    organization_slug = serializers.CharField(
+        source="organization.slug",
+        read_only=True,
+    )
+
+    class Meta:
+        model = OrganizationMembership
+        fields = (
+            "organization_id",
+            "organization_name",
+            "organization_slug",
+            "role",
+            "is_active",
+            "joined_at",
+        )
+
+
 class UserSerializer(serializers.ModelSerializer):
+    memberships = serializers.SerializerMethodField()
+
     class Meta:
         model = User
+
         fields = (
             "id",
             "username",
             "email",
             "first_name",
             "last_name",
-            "role",
+            "memberships",
         )
 
         read_only_fields = (
             "id",
             "username",
-            "role",
+            "memberships",
         )
+
+    def get_memberships(self, obj):
+        memberships = (
+            obj.organization_memberships
+            .filter(is_active=True)
+            .select_related("organization")
+        )
+
+        return MembershipSerializer(
+            memberships,
+            many=True,
+        ).data

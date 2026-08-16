@@ -8,6 +8,7 @@ from organizations.models import (
     OrganizationMembership,
 )
 from organizations.permissions import (
+    IsOrganizationAdmin,
     IsOrganizationCustomer,
     IsOrganizationMember,
 )
@@ -107,14 +108,20 @@ class TicketViewSet(
                 IsAuthenticated,
                 IsOrganizationCustomer,
             ]
-
+    
+        elif self.action == "destroy":
+            permission_classes = [
+                IsAuthenticated,
+                IsOrganizationAdmin,
+            ]
+    
         else:
             permission_classes = [
                 IsAuthenticated,
                 IsOrganizationMember,
                 IsTicketOwnerOrOrganizationStaff,
             ]
-
+    
         return [
             permission()
             for permission in permission_classes

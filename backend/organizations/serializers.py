@@ -20,6 +20,11 @@ class OrganizationInvitationSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+    organization_slug = serializers.CharField(
+        source="organization.slug",
+        read_only=True,
+    )
+
     invited_by_username = serializers.CharField(
         source="invited_by.username",
         read_only=True,
@@ -35,6 +40,7 @@ class OrganizationInvitationSerializer(serializers.ModelSerializer):
             "email",
             "role",
             "organization_name",
+            "organization_slug",
             "invited_by_username",
             "token",
             "expires_at",
@@ -47,6 +53,7 @@ class OrganizationInvitationSerializer(serializers.ModelSerializer):
             "id",
             "role",
             "organization_name",
+            "organization_slug",
             "invited_by_username",
             "token",
             "expires_at",
@@ -59,7 +66,10 @@ class OrganizationInvitationSerializer(serializers.ModelSerializer):
         if obj.accepted_at:
             return "accepted"
 
-        if obj.expires_at and obj.expires_at <= timezone.now():
+        if (
+            obj.expires_at
+            and obj.expires_at <= timezone.now()
+        ):
             return "expired"
 
         return "pending"
@@ -125,6 +135,8 @@ class InvitationAcceptSerializer(serializers.Serializer):
     )
 
     def validate_username(self, value):
+        value = value.strip()
+
         if User.objects.filter(
             username__iexact=value,
         ).exists():
@@ -168,7 +180,23 @@ class InvitationAcceptSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        invitation = self.context["invitation"]
+        invitation = OrganizationInvitation.objects.select_for_update().get(
+            pk=self.context["invitation"].pk,
+        )
+
+        # Check again after locking the invitation row.
+        if invitation.accepted_at:
+            raise serializers.ValidationError({
+                "detail": "This invitation has already been accepted."
+            })
+
+        if (
+            invitation.expires_at
+            and invitation.expires_at <= timezone.now()
+        ):
+            raise serializers.ValidationError({
+                "detail": "This invitation has expired."
+            })
 
         validated_data.pop("password_confirm")
 
@@ -184,22 +212,21 @@ class InvitationAcceptSerializer(serializers.Serializer):
                 "",
             ),
             password=validated_data["password"],
-
-            # Temporary compatibility with the old User.role field.
-            role=User.Role.AGENT,
         )
 
         OrganizationMembership.objects.create(
             organization=invitation.organization,
             user=user,
-            role=OrganizationMembership.Role.AGENT,
+            role=invitation.role,
             is_active=True,
         )
 
         invitation.accepted_at = timezone.now()
 
         invitation.save(
-            update_fields=["accepted_at"],
+            update_fields=[
+                "accepted_at",
+            ],
         )
 
         return user
