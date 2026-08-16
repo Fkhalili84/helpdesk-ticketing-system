@@ -562,6 +562,24 @@ class TicketAPITests(TestCase):
             user=self.agent_a,
         )
 
+        # OPEN -> IN_PROGRESS
+        response = self.client.patch(
+            self.detail_url(
+                self.organization_a,
+                self.ticket_a1,
+            ),
+            {
+                "status": Ticket.Status.IN_PROGRESS,
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        # IN_PROGRESS -> RESOLVED
         response = self.client.patch(
             self.detail_url(
                 self.organization_a,
@@ -712,6 +730,172 @@ class TicketAPITests(TestCase):
             response.status_code,
             status.HTTP_401_UNAUTHORIZED,
         )
+
+    def test_resolved_to_closed_sets_closed_at(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+
+        # Prepare ticket in RESOLVED state.
+        Ticket.objects.filter(
+            pk=self.ticket_a1.pk,
+        ).update(
+            status=Ticket.Status.RESOLVED,
+        )
+
+        response = self.client.patch(
+            self.detail_url(
+                self.organization_a,
+                self.ticket_a1,
+            ),
+            {
+                "status": Ticket.Status.CLOSED,
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.ticket_a1.refresh_from_db()
+
+        self.assertEqual(
+            self.ticket_a1.status,
+            Ticket.Status.CLOSED,
+        )
+
+        self.assertIsNotNone(
+            self.ticket_a1.closed_at,
+        )
+
+
+def     test_invalid_status_transitions_are_rejected(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+
+        invalid_transitions = (
+            (
+                Ticket.Status.OPEN,
+                Ticket.Status.RESOLVED,
+            ),
+            (
+                Ticket.Status.OPEN,
+                Ticket.Status.CLOSED,
+            ),
+            (
+                Ticket.Status.IN_PROGRESS,
+                Ticket.Status.OPEN,
+            ),
+            (
+                Ticket.Status.IN_PROGRESS,
+                Ticket.Status.CLOSED,
+            ),
+            (
+                Ticket.Status.RESOLVED,
+                Ticket.Status.OPEN,
+            ),
+            (
+                Ticket.Status.RESOLVED,
+                Ticket.Status.IN_PROGRESS,
+            ),
+            (
+                Ticket.Status.CLOSED,
+                Ticket.Status.OPEN,
+            ),
+            (
+                Ticket.Status.CLOSED,
+                Ticket.Status.IN_PROGRESS,
+            ),
+            (
+                Ticket.Status.CLOSED,
+                Ticket.Status.RESOLVED,
+            ),
+        )
+
+        for current_status, new_status in invalid_transitions:
+            with self.subTest(
+                current_status=current_status,
+                new_status=new_status,
+            ):
+                Ticket.objects.filter(
+                    pk=self.ticket_a1.pk,
+                ).update(
+                    status=current_status,
+                    resolved_at=None,
+                    closed_at=None,
+                )
+
+                response = self.client.patch(
+                    self.detail_url(
+                        self.organization_a,
+                        self.ticket_a1,
+                    ),
+                    {
+                        "status": new_status,
+                    },
+                    format="json",
+                )
+
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+
+                self.ticket_a1.refresh_from_db()
+
+                self.assertEqual(
+                    self.ticket_a1.status,
+                    current_status,
+                )
+
+
+def     test_same_status_update_is_allowed(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+
+        statuses = (
+            Ticket.Status.OPEN,
+            Ticket.Status.IN_PROGRESS,
+            Ticket.Status.RESOLVED,
+            Ticket.Status.CLOSED,
+        )
+
+        for ticket_status in statuses:
+            with self.subTest(
+                ticket_status=ticket_status,
+            ):
+                Ticket.objects.filter(
+                    pk=self.ticket_a1.pk,
+                ).update(
+                    status=ticket_status,
+                )
+
+                response = self.client.patch(
+                    self.detail_url(
+                        self.organization_a,
+                        self.ticket_a1,
+                    ),
+                    {
+                        "status": ticket_status,
+                    },
+                    format="json",
+                )
+
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_200_OK,
+                )
+    
+                self.ticket_a1.refresh_from_db()
+    
+                self.assertEqual(
+                    self.ticket_a1.status,
+                    ticket_status,
+                )
 
 
 class TicketMessageAPITests(TestCase):

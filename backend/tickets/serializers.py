@@ -36,6 +36,18 @@ class TicketCategorySerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    ALLOWED_STATUS_TRANSITIONS = {
+        Ticket.Status.OPEN: {
+            Ticket.Status.IN_PROGRESS,
+        },
+        Ticket.Status.IN_PROGRESS: {
+            Ticket.Status.RESOLVED,
+        },
+        Ticket.Status.RESOLVED: {
+            Ticket.Status.CLOSED,
+        },
+        Ticket.Status.CLOSED: set(),
+    }
     organization = serializers.PrimaryKeyRelatedField(
         read_only=True,
     )
@@ -136,7 +148,58 @@ class TicketSerializer(serializers.ModelSerializer):
             organization=organization,
         )
 
+    def validate_status_transition(self, attrs):
+        if self.instance is None:
+            return
+
+        new_status = attrs.get("status")
+
+        if new_status is None:
+            return
+
+        current_status = self.instance.status
+
+        # Sending the current status again is harmless.
+        if new_status == current_status:
+            return
+
+        allowed_statuses = self.ALLOWED_STATUS_TRANSITIONS.get(
+            current_status,
+            set(),
+        )
+
+        if new_status not in allowed_statuses:
+            current_label = Ticket.Status(
+                current_status
+            ).label
+
+            new_label = Ticket.Status(
+                new_status
+            ).label
+
+            allowed_labels = [
+                Ticket.Status(status_value).label
+                for status_value in allowed_statuses
+            ]
+
+            if allowed_labels:
+                allowed_text = ", ".join(
+                    allowed_labels
+                )
+            else:
+                allowed_text = "none"
+
+            raise serializers.ValidationError({
+                "status": (
+                    f"Invalid status transition from "
+                    f"'{current_label}' to '{new_label}'. "
+                    f"Allowed next status: {allowed_text}."
+                )
+            })
+
     def validate(self, attrs):
+        self.validate_status_transition(attrs)
+
         request = self.context.get("request")
         view = self.context.get("view")
 
@@ -222,14 +285,21 @@ class TicketSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         new_status = validated_data.get("status")
+        current_status = instance.status
 
-        if new_status == Ticket.Status.RESOLVED:
-            if instance.resolved_at is None:
-                instance.resolved_at = timezone.now()
+        status_changed = (
+            new_status is not None
+            and new_status != current_status
+        )
 
-        if new_status == Ticket.Status.CLOSED:
-            if instance.closed_at is None:
-                instance.closed_at = timezone.now()
+        if status_changed:
+            if new_status == Ticket.Status.RESOLVED:
+                if instance.resolved_at is None:
+                    instance.resolved_at = timezone.now()
+
+            elif new_status == Ticket.Status.CLOSED:
+                if instance.closed_at is None:
+                    instance.closed_at = timezone.now()
 
         return super().update(
             instance,
