@@ -14,6 +14,7 @@ from .models import (
     Ticket,
     TicketCategory,
     TicketMessage,
+    TicketHistory,
 )
 
 
@@ -771,7 +772,7 @@ class TicketAPITests(TestCase):
         )
 
 
-def     test_invalid_status_transitions_are_rejected(self):
+    def  test_invalid_status_transitions_are_rejected(self):
         self.client.force_authenticate(
             user=self.agent_a,
         )
@@ -852,7 +853,7 @@ def     test_invalid_status_transitions_are_rejected(self):
                 )
 
 
-def     test_same_status_update_is_allowed(self):
+    def test_same_status_update_is_allowed(self):
         self.client.force_authenticate(
             user=self.agent_a,
         )
@@ -896,6 +897,102 @@ def     test_same_status_update_is_allowed(self):
                     self.ticket_a1.status,
                     ticket_status,
                 )
+
+    def test_agent_can_view_ticket_history(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+
+        TicketHistory.objects.create(
+            ticket=self.ticket_a1,
+            changed_by=self.agent_a,
+            action=TicketHistory.Action.STATUS_CHANGED,
+            old_value="open",
+            new_value="in_progress",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-history",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            len(response.data),
+            1,
+        )
+
+        self.assertEqual(
+            response.data[0]["action"],
+            TicketHistory.Action.STATUS_CHANGED,
+        )
+
+
+    def test_customer_cannot_view_ticket_history(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+
+        TicketHistory.objects.create(
+            ticket=self.ticket_a1,
+            changed_by=self.agent_a,
+            action=TicketHistory.Action.STATUS_CHANGED,
+            old_value="open",
+            new_value="in_progress",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-history",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+
+    def test_other_organization_agent_cannot_view_ticket_history(self):
+        self.client.force_authenticate(
+            user=self.agent_b,
+        )
+
+        TicketHistory.objects.create(
+            ticket=self.ticket_a1,
+            changed_by=self.agent_a,
+            action=TicketHistory.Action.STATUS_CHANGED,
+            old_value="open",
+            new_value="in_progress",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-history",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
 
 
 class TicketMessageAPITests(TestCase):

@@ -5,6 +5,7 @@ from .views import (
     TicketCategoryViewSet,
     TicketMessageListCreateView,
     TicketViewSet,
+    TicketHistoryListView
 )
 
 
@@ -28,6 +29,11 @@ urlpatterns = [
         "tickets/<int:ticket_id>/messages/",
         TicketMessageListCreateView.as_view(),
         name="ticket-message-list",
+    ),
+    path(
+        "tickets/<int:ticket_id>/history/",
+        TicketHistoryListView.as_view(),
+        name="ticket-history",
     ),
 ]
 

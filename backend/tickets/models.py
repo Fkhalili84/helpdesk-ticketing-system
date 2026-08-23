@@ -121,6 +121,60 @@ class Ticket(models.Model):
         return f"#{self.pk} - {self.title}"
     
 
+class TicketHistory(models.Model):
+    ticket = models.ForeignKey(
+        Ticket,
+        on_delete=models.CASCADE,
+        related_name="history",
+    )
+
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ticket_history_changes",
+    )
+
+    class Action(models.TextChoices):
+        STATUS_CHANGED = "status_changed", "Status Changed"
+        PRIORITY_CHANGED = "priority_changed", "Priority Changed"
+        ASSIGNED_CHANGED = "assigned_changed", "Assigned Agent Changed"
+        CATEGORY_CHANGED = "category_changed", "Category Changed"
+
+    action = models.CharField(
+        max_length=50,
+        choices=Action.choices,
+    )
+
+    old_value = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    new_value = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
+
+    def __str__(self):
+        return (
+            f"Ticket #{self.ticket_id} "
+            f"{self.action}"
+        )
+    
+
 class TicketMessage(models.Model):
     ticket = models.ForeignKey(
         Ticket,

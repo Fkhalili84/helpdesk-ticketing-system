@@ -7,6 +7,7 @@ from users.models import User
 from .models import (
     Ticket,
     TicketCategory,
+    TicketHistory,
     TicketMessage,
 )
 
@@ -284,26 +285,123 @@ class TicketSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        new_status = validated_data.get("status")
-        current_status = instance.status
+        request = self.context.get("request")
 
-        status_changed = (
-            new_status is not None
-            and new_status != current_status
+        changed_fields = []
+
+        tracked_fields = {
+            "status": TicketHistory.Action.STATUS_CHANGED,
+            "priority": TicketHistory.Action.PRIORITY_CHANGED,
+            "assigned_agent": TicketHistory.Action.ASSIGNED_CHANGED,
+            "category": TicketHistory.Action.CATEGORY_CHANGED,
+        }
+
+        for field_name, action in tracked_fields.items():
+            old_value = getattr(
+                instance,
+                field_name,
+            )
+
+            new_value = validated_data.get(
+                field_name,
+                old_value,
+            )
+
+            if old_value != new_value:
+
+                if field_name == "assigned_agent":
+                    old_value_display = (
+                        str(old_value.id)
+                        if old_value
+                        else None
+                    )
+
+                    new_value_display = (
+                        str(new_value.id)
+                        if new_value
+                        else None
+                    )
+
+                elif field_name == "category":
+                    old_value_display = (
+                        str(old_value.id)
+                        if old_value
+                        else None
+                    )
+
+                    new_value_display = (
+                        str(new_value.id)
+                        if new_value
+                        else None
+                    )
+
+                else:
+                    old_value_display = str(
+                        old_value
+                    )
+
+                    new_value_display = str(
+                        new_value
+                    )
+
+                changed_fields.append(
+                    {
+                        "action": action,
+                        "old_value": old_value_display,
+                        "new_value": new_value_display,
+                    }
+                )
+
+        new_status = validated_data.get(
+            "status"
         )
 
-        if status_changed:
-            if new_status == Ticket.Status.RESOLVED:
-                if instance.resolved_at is None:
-                    instance.resolved_at = timezone.now()
+        if new_status == Ticket.Status.RESOLVED:
+            if instance.resolved_at is None:
+                instance.resolved_at = timezone.now()
 
-            elif new_status == Ticket.Status.CLOSED:
-                if instance.closed_at is None:
-                    instance.closed_at = timezone.now()
+        if new_status == Ticket.Status.CLOSED:
+            if instance.closed_at is None:
+                instance.closed_at = timezone.now()
 
-        return super().update(
+        updated_instance = super().update(
             instance,
             validated_data,
+        )
+
+        for change in changed_fields:
+            TicketHistory.objects.create(
+                ticket=updated_instance,
+                changed_by=(
+                    request.user
+                    if request
+                    and request.user.is_authenticated
+                    else None
+                ),
+                action=change["action"],
+                old_value=change["old_value"],
+                new_value=change["new_value"],
+            )
+
+        return updated_instance
+    
+
+class TicketHistorySerializer(serializers.ModelSerializer):
+    changed_by_username = serializers.CharField(
+        source="changed_by.username",
+        read_only=True,
+    )
+
+    class Meta:
+        model = TicketHistory
+
+        fields = (
+            "id",
+            "action",
+            "old_value",
+            "new_value",
+            "changed_by_username",
+            "created_at",
         )
 
 

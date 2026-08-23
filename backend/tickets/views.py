@@ -1,8 +1,10 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, viewsets
-from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import (
+    IsAuthenticated,
+)
 from organizations.models import (
     Organization,
     OrganizationMembership,
@@ -17,12 +19,14 @@ from .models import (
     Ticket,
     TicketCategory,
     TicketMessage,
+    TicketHistory
 )
 from .permissions import IsTicketOwnerOrOrganizationStaff
 from .serializers import (
     TicketCategorySerializer,
     TicketMessageSerializer,
     TicketSerializer,
+    TicketHistorySerializer
 )
 
 
@@ -177,4 +181,50 @@ class TicketMessageListCreateView(
         serializer.save(
             ticket=self.get_ticket(),
             sender=self.request.user,
+        )
+
+
+class TicketHistoryListView(generics.ListAPIView):
+    serializer_class = TicketHistorySerializer
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get_queryset(self):
+        organization_slug = self.kwargs[
+            "organization_slug"
+        ]
+
+        ticket_id = self.kwargs[
+            "ticket_id"
+        ]
+
+        user = self.request.user
+
+        ticket = get_object_or_404(
+            Ticket,
+            id=ticket_id,
+            organization__slug=organization_slug,
+        )
+
+        membership = OrganizationMembership.objects.filter(
+            organization=ticket.organization,
+            user=user,
+            is_active=True,
+        ).first()
+
+        if not membership:
+            raise PermissionDenied(
+                "You are not a member of this organization."
+            )
+
+        if membership.role == OrganizationMembership.Role.CUSTOMER:
+            raise PermissionDenied(
+                "Customers cannot access ticket history."
+            )
+
+        return TicketHistory.objects.filter(
+            ticket=ticket,
+        ).select_related(
+            "changed_by",
         )
