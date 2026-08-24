@@ -175,6 +175,50 @@ class TicketHistory(models.Model):
         )
     
 
+class TicketAttachment(models.Model):
+    ticket = models.ForeignKey(
+        Ticket,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+    )
+
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="ticket_attachments",
+    )
+
+    file = models.FileField(
+        upload_to="ticket_attachments/",
+    )
+
+    file_name = models.CharField(
+        max_length=255,
+    )
+
+    file_size = models.PositiveIntegerField()
+
+    content_type = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
+
+    def __str__(self):
+        return (
+            f"Attachment for Ticket #{self.ticket_id}"
+        )
+    
+
 class TicketMessage(models.Model):
     ticket = models.ForeignKey(
         Ticket,

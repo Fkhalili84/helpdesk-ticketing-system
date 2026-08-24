@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -15,6 +15,7 @@ from .models import (
     TicketCategory,
     TicketMessage,
     TicketHistory,
+    TicketAttachment,
 )
 
 
@@ -992,6 +993,205 @@ class TicketAPITests(TestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_customer_can_upload_attachment_to_own_ticket(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+    
+        uploaded_file = SimpleUploadedFile(
+            "screenshot.png",
+            b"fake image content",
+            content_type="image/png",
+        )
+    
+        response = self.client.post(
+            reverse(
+                "ticket-attachment-create",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+            {
+                "file": uploaded_file,
+            },
+            format="multipart",
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+    
+        attachment = TicketAttachment.objects.get(
+            ticket=self.ticket_a1,
+        )
+    
+        self.assertEqual(
+            attachment.uploaded_by,
+            self.customer_a1,
+        )
+    
+        self.assertEqual(
+            attachment.file_name,
+            "screenshot.png",
+        )
+    
+    
+    def test_customer_cannot_upload_attachment_to_other_customer_ticket(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+    
+        uploaded_file = SimpleUploadedFile(
+            "secret.pdf",
+            b"secret content",
+            content_type="application/pdf",
+        )
+    
+        response = self.client.post(
+            reverse(
+                "ticket-attachment-create",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a2.id,
+                },
+            ),
+            {
+                "file": uploaded_file,
+            },
+            format="multipart",
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+    
+    
+    def test_agent_can_upload_attachment_to_organization_ticket(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+    
+        uploaded_file = SimpleUploadedFile(
+            "log.txt",
+            b"log data",
+            content_type="text/plain",
+        )
+    
+        response = self.client.post(
+            reverse(
+                "ticket-attachment-create",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+            {
+                "file": uploaded_file,
+            },
+            format="multipart",
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+    
+    
+    def test_other_organization_agent_cannot_upload_attachment(self):
+        self.client.force_authenticate(
+            user=self.agent_b,
+        )
+    
+        uploaded_file = SimpleUploadedFile(
+            "hack.txt",
+            b"data",
+            content_type="text/plain",
+        )
+    
+        response = self.client.post(
+            reverse(
+                "ticket-attachment-create",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+            {
+                "file": uploaded_file,
+            },
+            format="multipart",
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+    
+    
+    def test_attachment_size_limit_is_enforced(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+    
+        large_file = SimpleUploadedFile(
+            "large.pdf",
+            b"x" * (11 * 1024 * 1024),
+            content_type="application/pdf",
+        )
+    
+        response = self.client.post(
+            reverse(
+                "ticket-attachment-create",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+            {
+                "file": large_file,
+            },
+            format="multipart",
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+    
+    
+    def test_attachment_invalid_type_is_rejected(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+    
+        executable_file = SimpleUploadedFile(
+            "malware.exe",
+            b"fake executable",
+            content_type="application/x-msdownload",
+        )
+    
+        response = self.client.post(
+            reverse(
+                "ticket-attachment-create",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+            {
+                "file": executable_file,
+            },
+            format="multipart",
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
         )
 
 

@@ -9,6 +9,7 @@ from .models import (
     TicketCategory,
     TicketHistory,
     TicketMessage,
+    TicketAttachment,
 )
 
 
@@ -404,6 +405,54 @@ class TicketHistorySerializer(serializers.ModelSerializer):
             "created_at",
         )
 
+
+class TicketAttachmentSerializer(serializers.ModelSerializer):
+    uploaded_by_username = serializers.CharField(
+        source="uploaded_by.username",
+        read_only=True,
+    )
+
+    class Meta:
+        model = TicketAttachment
+
+        fields = (
+            "id",
+            "file",
+            "file_name",
+            "file_size",
+            "content_type",
+            "uploaded_by_username",
+            "created_at",
+        )
+
+        read_only_fields = (
+            "file_name",
+            "file_size",
+            "content_type",
+            "uploaded_by_username",
+            "created_at",
+        )
+    def validate_file(self, value):
+        max_size = 10 * 1024 * 1024
+    
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                "File size cannot exceed 10MB."
+            )
+    
+        allowed_types = [
+            "image/png",
+            "image/jpeg",
+            "application/pdf",
+            "text/plain",
+        ]
+    
+        if value.content_type not in allowed_types:
+            raise serializers.ValidationError(
+                "Unsupported file type."
+            )
+    
+        return value
 
 class TicketMessageSerializer(serializers.ModelSerializer):
     sender = serializers.PrimaryKeyRelatedField(

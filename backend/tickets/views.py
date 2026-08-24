@@ -5,6 +5,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import (
     IsAuthenticated,
 )
+
+from rest_framework.parsers import MultiPartParser
 from organizations.models import (
     Organization,
     OrganizationMembership,
@@ -26,7 +28,8 @@ from .serializers import (
     TicketCategorySerializer,
     TicketMessageSerializer,
     TicketSerializer,
-    TicketHistorySerializer
+    TicketHistorySerializer,
+    TicketAttachmentSerializer,
 )
 
 
@@ -227,4 +230,66 @@ class TicketHistoryListView(generics.ListAPIView):
             ticket=ticket,
         ).select_related(
             "changed_by",
+        )
+    
+
+class TicketAttachmentCreateView(
+    generics.CreateAPIView,
+):
+    serializer_class = TicketAttachmentSerializer
+
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    parser_classes = [
+        MultiPartParser,
+    ]
+
+    def perform_create(
+        self,
+        serializer,
+    ):
+        ticket_id = self.kwargs["ticket_id"]
+
+        organization_slug = self.kwargs[
+            "organization_slug"
+        ]
+
+        ticket = get_object_or_404(
+            Ticket,
+            id=ticket_id,
+            organization__slug=organization_slug,
+        )
+
+        user = self.request.user
+
+        membership = OrganizationMembership.objects.filter(
+            organization=ticket.organization,
+            user=user,
+            is_active=True,
+        ).first()
+
+        if not membership:
+            raise PermissionDenied(
+                "You are not a member of this organization."
+            )
+
+        if (
+            membership.role
+            == OrganizationMembership.Role.CUSTOMER
+            and ticket.customer != user
+        ):
+            raise PermissionDenied(
+                "You cannot access this ticket."
+            )
+
+        uploaded_file = self.request.FILES["file"]
+
+        serializer.save(
+            ticket=ticket,
+            uploaded_by=user,
+            file_name=uploaded_file.name,
+            file_size=uploaded_file.size,
+            content_type=uploaded_file.content_type,
         )
