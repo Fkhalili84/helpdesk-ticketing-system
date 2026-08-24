@@ -219,12 +219,12 @@ class TicketAPITests(TestCase):
         )
 
         self.assertEqual(
-            len(response.data),
+            len(response.data["results"]),
             1,
         )
 
         self.assertEqual(
-            response.data[0]["id"],
+            response.data["results"][0]["id"],
             self.ticket_a1.id,
         )
 
@@ -403,7 +403,7 @@ class TicketAPITests(TestCase):
 
         returned_ids = {
             ticket["id"]
-            for ticket in response.data
+            for ticket in response.data["results"]
         }
 
         self.assertEqual(
@@ -704,7 +704,7 @@ class TicketAPITests(TestCase):
 
         returned_ids = {
             category["id"]
-            for category in response.data
+            for category in response.data["results"]
         }
 
         self.assertIn(
@@ -928,12 +928,12 @@ class TicketAPITests(TestCase):
         )
 
         self.assertEqual(
-            len(response.data),
+            len(response.data["results"]),
             1,
         )
 
         self.assertEqual(
-            response.data[0]["action"],
+            response.data["results"][0]["action"],
             TicketHistory.Action.STATUS_CHANGED,
         )
 
@@ -1199,7 +1199,7 @@ class TicketAPITests(TestCase):
         self.client.force_authenticate(
             user=self.agent_a,
         )
-    
+
         TicketAttachment.objects.create(
             ticket=self.ticket_a1,
             uploaded_by=self.agent_a,
@@ -1207,7 +1207,7 @@ class TicketAPITests(TestCase):
             file_size=1024,
             content_type="image/png",
         )
-    
+
         response = self.client.get(
             reverse(
                 "ticket-attachment-list",
@@ -1217,28 +1217,28 @@ class TicketAPITests(TestCase):
                 },
             ),
         )
-    
+
         self.assertEqual(
             response.status_code,
             status.HTTP_200_OK,
         )
-    
+
         self.assertEqual(
-            len(response.data),
+            len(response.data["results"]),
             1,
         )
-    
+
         self.assertEqual(
-            response.data[0]["file_name"],
+            response.data["results"][0]["file_name"],
             "test.png",
         )
-    
-    
+
+
     def test_customer_can_list_own_ticket_attachments(self):
         self.client.force_authenticate(
             user=self.customer_a1,
         )
-    
+
         TicketAttachment.objects.create(
             ticket=self.ticket_a1,
             uploaded_by=self.customer_a1,
@@ -1246,7 +1246,7 @@ class TicketAPITests(TestCase):
             file_size=2048,
             content_type="image/png",
         )
-    
+
         response = self.client.get(
             reverse(
                 "ticket-attachment-list",
@@ -1256,18 +1256,18 @@ class TicketAPITests(TestCase):
                 },
             ),
         )
-    
+
         self.assertEqual(
             response.status_code,
             status.HTTP_200_OK,
         )
-    
-    
+
+
     def test_customer_cannot_list_other_customer_ticket_attachments(self):
         self.client.force_authenticate(
             user=self.customer_a1,
         )
-    
+
         TicketAttachment.objects.create(
             ticket=self.ticket_a2,
             uploaded_by=self.customer_a2,
@@ -1275,7 +1275,7 @@ class TicketAPITests(TestCase):
             file_size=500,
             content_type="application/pdf",
         )
-    
+
         response = self.client.get(
             reverse(
                 "ticket-attachment-list",
@@ -1285,18 +1285,18 @@ class TicketAPITests(TestCase):
                 },
             ),
         )
-    
+
         self.assertEqual(
             response.status_code,
             status.HTTP_403_FORBIDDEN,
         )
-    
-    
+
+
     def test_other_organization_agent_cannot_list_ticket_attachments(self):
         self.client.force_authenticate(
             user=self.agent_b,
         )
-    
+
         TicketAttachment.objects.create(
             ticket=self.ticket_a1,
             uploaded_by=self.agent_a,
@@ -1304,7 +1304,7 @@ class TicketAPITests(TestCase):
             file_size=100,
             content_type="image/png",
         )
-    
+
         response = self.client.get(
             reverse(
                 "ticket-attachment-list",
@@ -1314,10 +1314,314 @@ class TicketAPITests(TestCase):
                 },
             ),
         )
-    
+
         self.assertEqual(
             response.status_code,
             status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_agent_can_download_ticket_attachment(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+
+        attachment = TicketAttachment.objects.create(
+            ticket=self.ticket_a1,
+            uploaded_by=self.agent_a,
+            file=SimpleUploadedFile(
+                "log.txt",
+                b"log content",
+                content_type="text/plain",
+            ),
+            file_name="log.txt",
+            file_size=12,
+            content_type="text/plain",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-download",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "attachment_id": attachment.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+
+    def test_customer_can_download_own_ticket_attachment(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+
+        attachment = TicketAttachment.objects.create(
+            ticket=self.ticket_a1,
+            uploaded_by=self.customer_a1,
+            file=SimpleUploadedFile(
+                "image.png",
+                b"image content",
+                content_type="image/png",
+            ),
+            file_name="image.png",
+            file_size=13,
+            content_type="image/png",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-download",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "attachment_id": attachment.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+
+    def test_customer_cannot_download_other_customer_attachment(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+
+        attachment = TicketAttachment.objects.create(
+            ticket=self.ticket_a2,
+            uploaded_by=self.customer_a2,
+            file=SimpleUploadedFile(
+                "private.txt",
+                b"private data",
+                content_type="text/plain",
+            ),
+            file_name="private.txt",
+            file_size=13,
+            content_type="text/plain",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-download",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "attachment_id": attachment.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+
+    def test_other_organization_agent_cannot_download_attachment(self):
+        self.client.force_authenticate(
+            user=self.agent_b,
+        )
+
+        attachment = TicketAttachment.objects.create(
+            ticket=self.ticket_a1,
+            uploaded_by=self.agent_a,
+            file=SimpleUploadedFile(
+                "secret.txt",
+                b"secret",
+                content_type="text/plain",
+            ),
+            file_name="secret.txt",
+            file_size=6,
+            content_type="text/plain",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-download",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "attachment_id": attachment.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+
+    def test_anonymous_user_cannot_download_attachment(self):
+        attachment = TicketAttachment.objects.create(
+            ticket=self.ticket_a1,
+            file=SimpleUploadedFile(
+                "test.txt",
+                b"test",
+                content_type="text/plain",
+            ),
+            file_name="test.txt",
+            file_size=4,
+            content_type="text/plain",
+        )
+
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-download",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "attachment_id": attachment.id,
+                },
+            ),
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+
+    def test_filter_tickets_by_status(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+    
+        self.ticket_a1.status = "open"
+        self.ticket_a1.save()
+    
+        response = self.client.get(
+            reverse(
+                "ticket-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                },
+            ),
+            {
+                "status": "open",
+            },
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+    
+        self.assertTrue(
+            len(response.data["results"]) >= 1
+        )
+    
+    
+    def test_filter_tickets_by_priority(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+    
+        self.ticket_a1.priority = "high"
+        self.ticket_a1.save()
+    
+        response = self.client.get(
+            reverse(
+                "ticket-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                },
+            ),
+            {
+                "priority": "high",
+            },
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+    
+        self.assertTrue(
+            len(response.data["results"]) >= 1
+        )
+    
+    
+    def test_search_ticket_by_title(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+    
+        self.ticket_a1.title = "Password reset problem"
+        self.ticket_a1.save()
+    
+        response = self.client.get(
+            reverse(
+                "ticket-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                },
+            ),
+            {
+                "search": "Password",
+            },
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+    
+        self.assertTrue(
+            len(response.data["results"]) >= 1
+        )
+    
+    
+    def test_ticket_ordering_by_created_at(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+    
+        response = self.client.get(
+            reverse(
+                "ticket-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                },
+            ),
+            {
+                "ordering": "-created_at",
+            },
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+    
+    
+    def test_ticket_pagination(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+    
+        response = self.client.get(
+            reverse(
+                "ticket-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                },
+            ),
+            {
+                "page": 1,
+            },
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+    
+        self.assertIn(
+            "results",
+            response.data,
         )
 
 
@@ -1444,12 +1748,12 @@ class TicketMessageAPITests(TestCase):
         )
 
         self.assertEqual(
-            len(response.data),
+            len(response.data["results"]),
             1,
         )
 
         self.assertEqual(
-            response.data[0]["message"],
+            response.data["results"][0]["message"],
             "The dashboard still does not work.",
         )
 

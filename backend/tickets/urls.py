@@ -7,6 +7,7 @@ from .views import (
     TicketViewSet,
     TicketHistoryListView,
     TicketAttachmentListCreateView,
+    TicketAttachmentDownloadView,
 )
 
 
@@ -45,6 +46,11 @@ urlpatterns = [
         "tickets/<int:ticket_id>/attachments/",
         TicketAttachmentListCreateView.as_view(),
         name="ticket-attachment-list",
+    ),
+    path(
+        "attachments/<int:attachment_id>/download/",
+        TicketAttachmentDownloadView.as_view(),
+        name="ticket-attachment-download",
     ),
 ]
 

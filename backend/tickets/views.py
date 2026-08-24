@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-
+from django.http import FileResponse
 from rest_framework import generics, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import (
@@ -251,30 +251,30 @@ class TicketAttachmentListCreateView(
         organization_slug = self.kwargs[
             "organization_slug"
         ]
-    
+
         ticket_id = self.kwargs[
             "ticket_id"
         ]
-    
+
         ticket = get_object_or_404(
             Ticket,
             id=ticket_id,
             organization__slug=organization_slug,
         )
-    
+
         user = self.request.user
-    
+
         membership = OrganizationMembership.objects.filter(
             organization=ticket.organization,
             user=user,
             is_active=True,
         ).first()
-    
+
         if not membership:
             raise PermissionDenied(
                 "You are not a member of this organization."
             )
-    
+
         if (
             membership.role
             == OrganizationMembership.Role.CUSTOMER
@@ -283,7 +283,7 @@ class TicketAttachmentListCreateView(
             raise PermissionDenied(
                 "You cannot access this ticket."
             )
-    
+
         return TicketAttachment.objects.filter(
             ticket=ticket,
         ).select_related(
@@ -391,3 +391,79 @@ class TicketAttachmentListView(
         ).select_related(
             "uploaded_by",
         )
+    
+
+
+class TicketAttachmentDownloadView(
+    generics.GenericAPIView,
+):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request, *args, **kwargs):
+        organization_slug = kwargs[
+            "organization_slug"
+        ]
+
+        attachment_id = kwargs[
+            "attachment_id"
+        ]
+
+        attachment = get_object_or_404(
+            TicketAttachment,
+            id=attachment_id,
+            ticket__organization__slug=organization_slug,
+        )
+
+        ticket = attachment.ticket
+
+        membership = OrganizationMembership.objects.filter(
+            organization=ticket.organization,
+            user=request.user,
+            is_active=True,
+        ).first()
+
+        if not membership:
+            raise PermissionDenied(
+                "You are not a member of this organization."
+            )
+
+        if (
+            membership.role
+            == OrganizationMembership.Role.CUSTOMER
+            and ticket.customer != request.user
+        ):
+            raise PermissionDenied(
+                "You cannot access this ticket."
+            )
+
+        return FileResponse(
+            attachment.file.open("rb"),
+            as_attachment=True,
+            filename=attachment.file_name,
+        )
+    
+class TicketListCreateView(
+    generics.ListCreateAPIView,
+):
+    serializer_class = TicketSerializer
+
+    filterset_fields = [
+        "status",
+        "priority",
+        "category",
+    ]
+
+    search_fields = [
+        "title",
+        "description",
+        "customer__username",
+    ]
+
+    ordering_fields = [
+        "created_at",
+        "updated_at",
+        "priority",
+        "status",
+    ]
