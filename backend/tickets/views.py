@@ -21,7 +21,8 @@ from .models import (
     Ticket,
     TicketCategory,
     TicketMessage,
-    TicketHistory
+    TicketHistory,
+    TicketAttachment,
 )
 from .permissions import IsTicketOwnerOrOrganizationStaff
 from .serializers import (
@@ -233,8 +234,8 @@ class TicketHistoryListView(generics.ListAPIView):
         )
     
 
-class TicketAttachmentCreateView(
-    generics.CreateAPIView,
+class TicketAttachmentListCreateView(
+    generics.ListCreateAPIView,
 ):
     serializer_class = TicketAttachmentSerializer
 
@@ -245,6 +246,49 @@ class TicketAttachmentCreateView(
     parser_classes = [
         MultiPartParser,
     ]
+
+    def get_queryset(self):
+        organization_slug = self.kwargs[
+            "organization_slug"
+        ]
+    
+        ticket_id = self.kwargs[
+            "ticket_id"
+        ]
+    
+        ticket = get_object_or_404(
+            Ticket,
+            id=ticket_id,
+            organization__slug=organization_slug,
+        )
+    
+        user = self.request.user
+    
+        membership = OrganizationMembership.objects.filter(
+            organization=ticket.organization,
+            user=user,
+            is_active=True,
+        ).first()
+    
+        if not membership:
+            raise PermissionDenied(
+                "You are not a member of this organization."
+            )
+    
+        if (
+            membership.role
+            == OrganizationMembership.Role.CUSTOMER
+            and ticket.customer != user
+        ):
+            raise PermissionDenied(
+                "You cannot access this ticket."
+            )
+    
+        return TicketAttachment.objects.filter(
+            ticket=ticket,
+        ).select_related(
+            "uploaded_by",
+        )
 
     def perform_create(
         self,
@@ -292,4 +336,58 @@ class TicketAttachmentCreateView(
             file_name=uploaded_file.name,
             file_size=uploaded_file.size,
             content_type=uploaded_file.content_type,
+        )
+
+
+
+class TicketAttachmentListView(
+    generics.ListAPIView,
+):
+    serializer_class = TicketAttachmentSerializer
+
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get_queryset(self):
+        organization_slug = self.kwargs[
+            "organization_slug"
+        ]
+
+        ticket_id = self.kwargs[
+            "ticket_id"
+        ]
+
+        ticket = get_object_or_404(
+            Ticket,
+            id=ticket_id,
+            organization__slug=organization_slug,
+        )
+
+        user = self.request.user
+
+        membership = OrganizationMembership.objects.filter(
+            organization=ticket.organization,
+            user=user,
+            is_active=True,
+        ).first()
+
+        if not membership:
+            raise PermissionDenied(
+                "You are not a member of this organization."
+            )
+
+        if (
+            membership.role
+            == OrganizationMembership.Role.CUSTOMER
+            and ticket.customer != user
+        ):
+            raise PermissionDenied(
+                "You cannot access this ticket."
+            )
+
+        return TicketAttachment.objects.filter(
+            ticket=ticket,
+        ).select_related(
+            "uploaded_by",
         )

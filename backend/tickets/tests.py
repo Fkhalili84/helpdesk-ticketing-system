@@ -1195,6 +1195,132 @@ class TicketAPITests(TestCase):
         )
 
 
+    def test_agent_can_list_ticket_attachments(self):
+        self.client.force_authenticate(
+            user=self.agent_a,
+        )
+    
+        TicketAttachment.objects.create(
+            ticket=self.ticket_a1,
+            uploaded_by=self.agent_a,
+            file_name="test.png",
+            file_size=1024,
+            content_type="image/png",
+        )
+    
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+    
+        self.assertEqual(
+            len(response.data),
+            1,
+        )
+    
+        self.assertEqual(
+            response.data[0]["file_name"],
+            "test.png",
+        )
+    
+    
+    def test_customer_can_list_own_ticket_attachments(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+    
+        TicketAttachment.objects.create(
+            ticket=self.ticket_a1,
+            uploaded_by=self.customer_a1,
+            file_name="customer.png",
+            file_size=2048,
+            content_type="image/png",
+        )
+    
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+    
+    
+    def test_customer_cannot_list_other_customer_ticket_attachments(self):
+        self.client.force_authenticate(
+            user=self.customer_a1,
+        )
+    
+        TicketAttachment.objects.create(
+            ticket=self.ticket_a2,
+            uploaded_by=self.customer_a2,
+            file_name="private.pdf",
+            file_size=500,
+            content_type="application/pdf",
+        )
+    
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a2.id,
+                },
+            ),
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+    
+    
+    def test_other_organization_agent_cannot_list_ticket_attachments(self):
+        self.client.force_authenticate(
+            user=self.agent_b,
+        )
+    
+        TicketAttachment.objects.create(
+            ticket=self.ticket_a1,
+            uploaded_by=self.agent_a,
+            file_name="private.png",
+            file_size=100,
+            content_type="image/png",
+        )
+    
+        response = self.client.get(
+            reverse(
+                "ticket-attachment-list",
+                kwargs={
+                    "organization_slug": self.organization_a.slug,
+                    "ticket_id": self.ticket_a1.id,
+                },
+            ),
+        )
+    
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+
 class TicketMessageAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()

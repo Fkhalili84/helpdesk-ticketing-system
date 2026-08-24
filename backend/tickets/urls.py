@@ -6,7 +6,7 @@ from .views import (
     TicketMessageListCreateView,
     TicketViewSet,
     TicketHistoryListView,
-    TicketAttachmentCreateView,
+    TicketAttachmentListCreateView,
 )
 
 
@@ -38,8 +38,13 @@ urlpatterns = [
     ),
     path(
         "tickets/<int:ticket_id>/attachments/",
-        TicketAttachmentCreateView.as_view(),
+        TicketAttachmentListCreateView.as_view(),
         name="ticket-attachment-create",
+    ),
+    path(
+        "tickets/<int:ticket_id>/attachments/",
+        TicketAttachmentListCreateView.as_view(),
+        name="ticket-attachment-list",
     ),
 ]
 
