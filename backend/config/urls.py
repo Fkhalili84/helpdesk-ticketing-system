@@ -45,4 +45,8 @@ urlpatterns = [
         "api/",
         include("notifications.urls"),
     ),
+    path(
+        "api/",
+        include("organizations.member_urls"),
+    ),
 ]
