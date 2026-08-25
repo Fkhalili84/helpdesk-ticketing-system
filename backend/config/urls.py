@@ -24,6 +24,13 @@ urlpatterns = [
     ),
 
     path(
+        "api/",
+        include(
+            "organizations.organization_urls"
+        ),
+    ),
+
+    path(
         "api/organizations/<slug:organization_slug>/",
         include("tickets.urls"),
     ),
