@@ -1,0 +1,2267 @@
+openapi: 3.0.3
+info:
+  title: Helpdesk Ticketing System API
+  version: 1.0.0
+  description: REST API for a multi-tenant helpdesk ticketing system.
+paths:
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: auth_me_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: auth_me_partial_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      description: Checks whether the backend service is running.
+      summary: Health check
+      tags:
+      - System
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/invitations/{token}/:
+    get:
+      operationId: invitations_retrieve
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - invitations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationInvitation'
+          description: ''
+  /api/invitations/{token}/accept/:
+    post:
+      operationId: invitations_accept_create
+      description: Accepts a valid organization invitation for the authenticated user.
+      summary: Accept organization invitation
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Organizations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/organizations/{organization_slug}/:
+    get:
+      operationId: organizations_retrieve
+      description: Returns organization information and organization statistics. The
+        authenticated user must be an active member.
+      summary: Get organization details
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Organizations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationDetail'
+          description: ''
+    patch:
+      operationId: organizations_partial_update
+      description: Updates organization settings. Only active organization admins
+        can perform this operation.
+      summary: Update organization
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Organizations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationDetail'
+          description: ''
+  /api/organizations/{organization_slug}/attachments/{attachment_id}/download/:
+    get:
+      operationId: organizations_attachments_download_retrieve
+      description: Securely downloads a ticket attachment after organization and ticket
+        permission checks.
+      summary: Download ticket attachment
+      parameters:
+      - in: path
+        name: attachment_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Attachment file
+  /api/organizations/{organization_slug}/dashboard/agents/:
+    get:
+      operationId: organizations_dashboard_agents_list
+      description: Returns assigned and resolved ticket counts for active agents in
+        the selected organization. Only organization admins and agents can access
+        this endpoint.
+      summary: Get agent performance statistics
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DashboardAgentPerformanceResponse'
+          description: ''
+  /api/organizations/{organization_slug}/dashboard/priorities/:
+    get:
+      operationId: organizations_dashboard_priorities_retrieve
+      description: Returns ticket counts grouped by priority for the selected organization.
+      summary: Get ticket priority statistics
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardPriorityResponse'
+          description: ''
+  /api/organizations/{organization_slug}/dashboard/resolution/:
+    get:
+      operationId: organizations_dashboard_resolution_retrieve
+      description: Returns the number of resolved tickets and the average ticket resolution
+        time in hours. Closed tickets with a resolution timestamp are also included.
+      summary: Get resolution metrics
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResolutionMetricsResponse'
+          description: ''
+  /api/organizations/{organization_slug}/dashboard/sla/:
+    get:
+      operationId: organizations_dashboard_sla_retrieve
+      description: Returns SLA compliance statistics including tickets within SLA,
+        breached tickets, overall compliance percentage, and statistics grouped by
+        ticket priority. Only organization admins and agents can access this endpoint.
+      summary: Get SLA statistics
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSLAResponse'
+          description: ''
+  /api/organizations/{organization_slug}/dashboard/summary/:
+    get:
+      operationId: organizations_dashboard_summary_retrieve
+      description: Returns the total number of tickets and ticket counts grouped by
+        status for the selected organization.
+      summary: Get dashboard summary
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummaryResponse'
+          description: ''
+  /api/organizations/{organization_slug}/invitations/:
+    get:
+      operationId: organizations_invitations_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - organizations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrganizationInvitationList'
+          description: ''
+    post:
+      operationId: organizations_invitations_create
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - organizations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationInvitationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrganizationInvitationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrganizationInvitationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationInvitation'
+          description: ''
+  /api/organizations/{organization_slug}/members/:
+    get:
+      operationId: organizations_members_list
+      description: Returns members of the selected organization. Only an active organization
+        admin can access this endpoint.
+      summary: List organization members
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Members
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrganizationMemberList'
+          description: ''
+  /api/organizations/{organization_slug}/members/{membership_id}/:
+    get:
+      operationId: organizations_members_retrieve
+      description: Returns details for one organization membership.
+      summary: Get organization member
+      parameters:
+      - in: path
+        name: membership_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Members
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMember'
+          description: ''
+    patch:
+      operationId: organizations_members_partial_update
+      description: Changes the role or active state of an organization member. The
+        last active admin cannot be deactivated or demoted.
+      summary: Update organization member
+      parameters:
+      - in: path
+        name: membership_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationMemberUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationMemberUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationMemberUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMember'
+          description: ''
+    delete:
+      operationId: organizations_members_destroy
+      description: Removes an organization membership without deleting the underlying
+        user account. The last active admin cannot be removed.
+      summary: Remove organization member
+      parameters:
+      - in: path
+        name: membership_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Members
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/organizations/{organization_slug}/notifications/:
+    get:
+      operationId: organizations_notifications_list
+      description: Returns notifications belonging to the authenticated user in the
+        selected organization.
+      summary: List notifications
+      parameters:
+      - in: query
+        name: is_read
+        schema:
+          type: boolean
+      - in: query
+        name: notification_type
+        schema:
+          type: string
+          enum:
+          - new_message
+          - status_changed
+          - ticket_assigned
+        description: |-
+          * `ticket_assigned` - Ticket Assigned
+          * `status_changed` - Status Changed
+          * `new_message` - New Message
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/organizations/{organization_slug}/notifications/{notification_id}/read/:
+    patch:
+      operationId: organizations_notifications_read_partial_update
+      description: Marks one notification belonging to the authenticated user as read.
+      summary: Mark notification as read
+      parameters:
+      - in: path
+        name: notification_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/organizations/{organization_slug}/notifications/read-all/:
+    post:
+      operationId: organizations_notifications_read_all_create
+      description: Marks all unread notifications belonging to the authenticated user
+        as read.
+      summary: Mark all notifications as read
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationReadAllResponse'
+          description: ''
+  /api/organizations/{organization_slug}/notifications/unread-count/:
+    get:
+      operationId: organizations_notifications_unread_count_retrieve
+      description: Returns the number of unread notifications for the authenticated
+        user.
+      summary: Get unread notification count
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationUnreadCountResponse'
+          description: ''
+  /api/organizations/{organization_slug}/register/:
+    post:
+      operationId: organizations_register_create
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - organizations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomerRegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomerRegisterRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerRegister'
+          description: ''
+  /api/organizations/{organization_slug}/ticket-categories/:
+    get:
+      operationId: organizations_ticket_categories_list
+      summary: List ticket categories
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketCategoryList'
+          description: ''
+  /api/organizations/{organization_slug}/ticket-categories/{id}/:
+    get:
+      operationId: organizations_ticket_categories_retrieve
+      summary: Get ticket category
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketCategory'
+          description: ''
+  /api/organizations/{organization_slug}/tickets/:
+    get:
+      operationId: organizations_tickets_list
+      description: Returns tickets visible to the authenticated user in the selected
+        organization. Customers only see their own tickets.
+      summary: List tickets
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketList'
+          description: ''
+    post:
+      operationId: organizations_tickets_create
+      description: Creates a ticket for an authenticated customer in the selected
+        organization.
+      summary: Create ticket
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+  /api/organizations/{organization_slug}/tickets/{id}/:
+    get:
+      operationId: organizations_tickets_retrieve
+      summary: Get ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+    put:
+      operationId: organizations_tickets_update
+      summary: Update ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+    patch:
+      operationId: organizations_tickets_partial_update
+      summary: Partially update ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+    delete:
+      operationId: organizations_tickets_destroy
+      description: Deletes a ticket. Only an organization admin can perform this operation.
+      summary: Delete ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/organizations/{organization_slug}/tickets/{ticket_id}/attachments/:
+    get:
+      operationId: organizations_tickets_attachments_list
+      description: Returns attachments belonging to a ticket.
+      summary: List ticket attachments
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: path
+        name: ticket_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketAttachmentList'
+          description: ''
+    post:
+      operationId: organizations_tickets_attachments_create
+      description: Uploads an attachment to a ticket. File size and content type validation
+        are applied by the serializer.
+      summary: Upload ticket attachment
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: ticket_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Tickets
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketAttachmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketAttachmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketAttachment'
+          description: ''
+  /api/organizations/{organization_slug}/tickets/{ticket_id}/history/:
+    get:
+      operationId: organizations_tickets_history_list
+      description: Returns the audit history for a ticket. Only organization agents
+        and admins can access ticket history.
+      summary: Get ticket history
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: path
+        name: ticket_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketHistoryList'
+          description: ''
+  /api/organizations/{organization_slug}/tickets/{ticket_id}/messages/:
+    get:
+      operationId: organizations_tickets_messages_list
+      description: Returns conversation messages for a ticket.
+      summary: List ticket messages
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: path
+        name: ticket_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketMessageList'
+          description: ''
+    post:
+      operationId: organizations_tickets_messages_create
+      description: Creates a new message on a ticket.
+      summary: Send ticket message
+      parameters:
+      - in: path
+        name: organization_slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: ticket_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Tickets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketMessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketMessageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketMessage'
+          description: ''
+  /api/organizations/onboard/:
+    post:
+      operationId: organizations_onboard_create
+      tags:
+      - organizations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationOnboardingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrganizationOnboardingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrganizationOnboardingRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationOnboarding'
+          description: ''
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - status_changed
+      - priority_changed
+      - assigned_changed
+      - category_changed
+      type: string
+      description: |-
+        * `status_changed` - Status Changed
+        * `priority_changed` - Priority Changed
+        * `assigned_changed` - Assigned Agent Changed
+        * `category_changed` - Category Changed
+    CustomerRegister:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+      required:
+      - username
+    CustomerRegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password_confirm:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - password_confirm
+      - username
+    DashboardAgentPerformanceResponse:
+      type: object
+      properties:
+        agent_id:
+          type: integer
+        username:
+          type: string
+        assigned:
+          type: integer
+        resolved:
+          type: integer
+      required:
+      - agent_id
+      - assigned
+      - resolved
+      - username
+    DashboardPriorityResponse:
+      type: object
+      properties:
+        low:
+          type: integer
+        medium:
+          type: integer
+        high:
+          type: integer
+        urgent:
+          type: integer
+      required:
+      - high
+      - low
+      - medium
+      - urgent
+    DashboardResolutionMetricsResponse:
+      type: object
+      properties:
+        resolved_tickets:
+          type: integer
+        average_resolution_hours:
+          type: number
+          format: double
+      required:
+      - average_resolution_hours
+      - resolved_tickets
+    DashboardSLAResponse:
+      type: object
+      properties:
+        total_tickets:
+          type: integer
+        within_sla:
+          type: integer
+        breached:
+          type: integer
+        compliance_percentage:
+          type: number
+          format: double
+        by_priority:
+          type: object
+          additionalProperties: {}
+      required:
+      - breached
+      - by_priority
+      - compliance_percentage
+      - total_tickets
+      - within_sla
+    DashboardSummaryResponse:
+      type: object
+      properties:
+        total_tickets:
+          type: integer
+        open_tickets:
+          type: integer
+        in_progress_tickets:
+          type: integer
+        resolved_tickets:
+          type: integer
+        closed_tickets:
+          type: integer
+      required:
+      - closed_tickets
+      - in_progress_tickets
+      - open_tickets
+      - resolved_tickets
+      - total_tickets
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        notification_type:
+          allOf:
+          - $ref: '#/components/schemas/NotificationTypeEnum'
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        ticket:
+          type: integer
+          readOnly: true
+          nullable: true
+        actor_username:
+          type: string
+          readOnly: true
+          nullable: true
+        is_read:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        read_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - actor_username
+      - created_at
+      - id
+      - is_read
+      - message
+      - notification_type
+      - read_at
+      - ticket
+      - title
+    NotificationReadAllResponse:
+      type: object
+      properties:
+        updated:
+          type: integer
+      required:
+      - updated
+    NotificationTypeEnum:
+      enum:
+      - ticket_assigned
+      - status_changed
+      - new_message
+      type: string
+      description: |-
+        * `ticket_assigned` - Ticket Assigned
+        * `status_changed` - Status Changed
+        * `new_message` - New Message
+    NotificationUnreadCountResponse:
+      type: object
+      properties:
+        unread_count:
+          type: integer
+      required:
+      - unread_count
+    OrganizationDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        is_active:
+          type: boolean
+          readOnly: true
+        statistics:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+      required:
+      - id
+      - is_active
+      - name
+      - slug
+      - statistics
+    OrganizationInvitation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+        organization_name:
+          type: string
+          readOnly: true
+        organization_slug:
+          type: string
+          readOnly: true
+        invited_by_username:
+          type: string
+          readOnly: true
+        token:
+          type: string
+          format: uuid
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        accepted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+      required:
+      - accepted_at
+      - created_at
+      - email
+      - expires_at
+      - id
+      - invited_by_username
+      - organization_name
+      - organization_slug
+      - role
+      - status
+      - token
+    OrganizationInvitationRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+      required:
+      - email
+    OrganizationMember:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+      required:
+      - email
+      - first_name
+      - id
+      - is_active
+      - last_name
+      - role
+      - user_id
+      - username
+    OrganizationOnboarding:
+      type: object
+      properties:
+        organization_name:
+          type: string
+          maxLength: 150
+        organization_slug:
+          type: string
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+        username:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+      required:
+      - email
+      - organization_name
+      - organization_slug
+      - username
+    OrganizationOnboardingRequest:
+      type: object
+      properties:
+        organization_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        organization_slug:
+          type: string
+          minLength: 1
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password_confirm:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - organization_name
+      - organization_slug
+      - password
+      - password_confirm
+      - username
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedOrganizationInvitationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationInvitation'
+    PaginatedOrganizationMemberList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationMember'
+    PaginatedTicketAttachmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketAttachment'
+    PaginatedTicketCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketCategory'
+    PaginatedTicketHistoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketHistory'
+    PaginatedTicketList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+    PaginatedTicketMessageList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketMessage'
+    PatchedOrganizationMemberUpdateRequest:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        is_active:
+          type: boolean
+    PatchedOrganizationUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+    PatchedTicketRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+        assigned_agent:
+          type: integer
+          nullable: true
+        category:
+          type: integer
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+    PatchedUserRequest:
+      type: object
+      properties:
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+    PriorityEnum:
+      enum:
+      - low
+      - medium
+      - high
+      - urgent
+      type: string
+      description: |-
+        * `low` - Low
+        * `medium` - Medium
+        * `high` - High
+        * `urgent` - Urgent
+    RoleEnum:
+      enum:
+      - admin
+      - agent
+      - customer
+      type: string
+      description: |-
+        * `admin` - Organization Admin
+        * `agent` - Support Agent
+        * `customer` - Customer
+    StatusEnum:
+      enum:
+      - open
+      - in_progress
+      - resolved
+      - closed
+      type: string
+      description: |-
+        * `open` - Open
+        * `in_progress` - In Progress
+        * `resolved` - Resolved
+        * `closed` - Closed
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        organization:
+          type: integer
+          readOnly: true
+        organization_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        customer:
+          type: integer
+          readOnly: true
+        customer_username:
+          type: string
+          readOnly: true
+        assigned_agent:
+          type: integer
+          nullable: true
+        assigned_agent_username:
+          type: string
+          readOnly: true
+        category:
+          type: integer
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - assigned_agent_username
+      - category_name
+      - closed_at
+      - created_at
+      - customer
+      - customer_username
+      - description
+      - id
+      - organization
+      - organization_name
+      - resolved_at
+      - title
+      - updated_at
+    TicketAttachment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        file:
+          type: string
+          format: uri
+        file_name:
+          type: string
+          readOnly: true
+        file_size:
+          type: integer
+          readOnly: true
+        content_type:
+          type: string
+          readOnly: true
+        uploaded_by_username:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content_type
+      - created_at
+      - file
+      - file_name
+      - file_size
+      - id
+      - uploaded_by_username
+    TicketAttachmentRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
+    TicketCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        organization:
+          type: integer
+          readOnly: true
+          nullable: true
+        organization_name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - organization
+      - organization_name
+    TicketHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        old_value:
+          type: string
+          nullable: true
+          maxLength: 100
+        new_value:
+          type: string
+          nullable: true
+          maxLength: 100
+        changed_by_username:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - changed_by_username
+      - created_at
+      - id
+    TicketMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ticket:
+          type: integer
+          readOnly: true
+        sender:
+          type: integer
+          readOnly: true
+        sender_username:
+          type: string
+          readOnly: true
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - message
+      - sender
+      - sender_username
+      - ticket
+    TicketMessageRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+      required:
+      - message
+    TicketRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+        assigned_agent:
+          type: integer
+          nullable: true
+        category:
+          type: integer
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+      required:
+      - description
+      - title
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        memberships:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+      required:
+      - id
+      - memberships
+      - username
+    UserRequest:
+      type: object
+      properties:
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: Authentication
+  description: JWT authentication endpoints.
+- name: Organizations
+  description: Organization onboarding and management.
+- name: Members
+  description: Organization member management.
+- name: Tickets
+  description: Ticket management endpoints.
+- name: Dashboard
+  description: Organization dashboard and statistics.
+- name: Notifications
+  description: User notification endpoints.

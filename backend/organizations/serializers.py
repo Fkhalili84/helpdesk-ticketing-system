@@ -187,7 +187,7 @@ class OrganizationInvitationSerializer(serializers.ModelSerializer):
             "status",
         )
 
-    def get_status(self, obj):
+    def get_status(self, obj) -> str:
         if obj.accepted_at:
             return "accepted"
 

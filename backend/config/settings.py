@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "organizations",
     "dashboard",
     "notifications.apps.NotificationsConfig",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -82,6 +83,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -97,4 +99,69 @@ REST_FRAMEWORK = {
     "rest_framework.filters.SearchFilter",
     "rest_framework.filters.OrderingFilter",
 ],
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Helpdesk Ticketing System API",
+
+    "DESCRIPTION": (
+        "REST API for a multi-tenant helpdesk "
+        "ticketing system."
+    ),
+
+    "VERSION": "1.0.0",
+
+    "SERVE_INCLUDE_SCHEMA": False,
+
+    "SERVE_PERMISSIONS": [
+        "rest_framework.permissions.AllowAny",
+    ],
+
+    "COMPONENT_SPLIT_REQUEST": True,
+
+    "SCHEMA_PATH_PREFIX": r"/api",
+
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "filter": True,
+    },
+
+    "TAGS": [
+        {
+            "name": "Authentication",
+            "description": "JWT authentication endpoints.",
+        },
+        {
+            "name": "Organizations",
+            "description": (
+                "Organization onboarding and management."
+            ),
+        },
+        {
+            "name": "Members",
+            "description": (
+                "Organization member management."
+            ),
+        },
+        {
+            "name": "Tickets",
+            "description": (
+                "Ticket management endpoints."
+            ),
+        },
+        {
+            "name": "Dashboard",
+            "description": (
+                "Organization dashboard and statistics."
+            ),
+        },
+        {
+            "name": "Notifications",
+            "description": (
+                "User notification endpoints."
+            ),
+        },
+    ],
 }

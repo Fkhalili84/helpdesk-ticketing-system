@@ -31,7 +31,7 @@ class OrganizationDetailSerializer(
     def get_statistics(
         self,
         organization,
-    ):
+    ) -> dict:
         membership_statistics = (
             OrganizationMembership.objects
             .filter(

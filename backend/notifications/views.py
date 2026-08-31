@@ -5,7 +5,23 @@ from django_filters.rest_framework import (
     DjangoFilterBackend,
 )
 
-from rest_framework import generics
+
+from organizations.models import (
+    Organization,
+    OrganizationMembership,
+)
+
+from .models import Notification
+from .serializers import NotificationSerializer
+from drf_spectacular.utils import extend_schema
+
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
+
+from rest_framework import generics, serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
@@ -22,13 +38,22 @@ from .serializers import NotificationSerializer
 
 
 class OrganizationNotificationMixin:
-
     def get_organization(self):
-        return get_object_or_404(
-            Organization,
-            slug=self.kwargs["organization_slug"],
-            is_active=True,
-        )
+        if not hasattr(
+            self,
+            "_notification_organization",
+        ):
+            self._notification_organization = (
+                get_object_or_404(
+                    Organization,
+                    slug=self.kwargs[
+                        "organization_slug"
+                    ],
+                    is_active=True,
+                )
+            )
+
+        return self._notification_organization
 
     def get_membership(self):
         organization = self.get_organization()
@@ -51,6 +76,16 @@ class OrganizationNotificationMixin:
         return membership
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=["Notifications"],
+        summary="List notifications",
+        description=(
+            "Returns notifications belonging to the "
+            "authenticated user in the selected organization."
+        ),
+    ),
+)
 class NotificationListView(
     OrganizationNotificationMixin,
     generics.ListAPIView,
@@ -80,6 +115,8 @@ class NotificationListView(
     ]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Notification.objects.none()
         self.get_membership()
 
         organization = self.get_organization()
@@ -107,6 +144,22 @@ class NotificationUnreadCountView(
         IsAuthenticated,
     ]
 
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Get unread notification count",
+        description=(
+            "Returns the number of unread notifications "
+            "for the authenticated user."
+        ),
+        responses={
+            200: inline_serializer(
+                name="NotificationUnreadCountResponse",
+                fields={
+                    "unread_count": serializers.IntegerField(),
+                },
+            ),
+        },
+    )
     def get(
         self,
         request,
@@ -141,6 +194,18 @@ class NotificationMarkReadView(
         IsAuthenticated,
     ]
 
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Mark notification as read",
+        description=(
+            "Marks one notification belonging to the "
+            "authenticated user as read."
+        ),
+        request=None,
+        responses={
+            200: NotificationSerializer,
+        },
+    )
     def patch(
         self,
         request,
@@ -186,6 +251,23 @@ class NotificationReadAllView(
         IsAuthenticated,
     ]
 
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Mark all notifications as read",
+        description=(
+            "Marks all unread notifications belonging "
+            "to the authenticated user as read."
+        ),
+        request=None,
+        responses={
+            200: inline_serializer(
+                name="NotificationReadAllResponse",
+                fields={
+                    "updated": serializers.IntegerField(),
+                },
+            ),
+        },
+    )
     def post(
         self,
         request,
