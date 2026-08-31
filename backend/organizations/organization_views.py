@@ -1,12 +1,10 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-from rest_framework.exceptions import (
-    PermissionDenied,
-)
-from rest_framework.permissions import (
-    IsAuthenticated,
-)
+from drf_spectacular.utils import extend_schema
+
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -91,6 +89,18 @@ class OrganizationDetailView(
         IsAuthenticated,
     ]
 
+    @extend_schema(
+        tags=["Organizations"],
+        summary="Get organization details",
+        description=(
+            "Returns organization information and "
+            "organization statistics. The authenticated "
+            "user must be an active member."
+        ),
+        responses={
+            200: OrganizationDetailSerializer,
+        },
+    )
     def get(
         self,
         request,
@@ -112,6 +122,19 @@ class OrganizationDetailView(
             serializer.data
         )
 
+    @extend_schema(
+        tags=["Organizations"],
+        summary="Update organization",
+        description=(
+            "Updates organization settings. "
+            "Only active organization admins can "
+            "perform this operation."
+        ),
+        request=OrganizationUpdateSerializer,
+        responses={
+            200: OrganizationDetailSerializer,
+        },
+    )
     def patch(
         self,
         request,

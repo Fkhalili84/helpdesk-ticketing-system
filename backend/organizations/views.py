@@ -8,7 +8,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from users.serializers import CustomerRegisterSerializer
-
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from .models import (
     Organization,
     OrganizationInvitation,
@@ -137,7 +138,18 @@ class InvitationAcceptView(APIView):
     permission_classes = [
         AllowAny,
     ]
-
+    @extend_schema(
+        tags=["Organizations"],
+        summary="Accept organization invitation",
+        description=(
+            "Accepts a valid organization invitation "
+            "for the authenticated user."
+        ),
+        request=None,
+        responses={
+            200: OpenApiTypes.OBJECT,
+        },
+    )
     def post(self, request, token):
         invitation = get_object_or_404(
             OrganizationInvitation.objects.select_related(

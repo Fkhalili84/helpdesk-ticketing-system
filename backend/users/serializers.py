@@ -144,7 +144,7 @@ class UserSerializer(serializers.ModelSerializer):
             "memberships",
         )
 
-    def get_memberships(self, obj):
+    def get_memberships(self, obj) -> list[dict]:
         memberships = (
             obj.organization_memberships
             .filter(is_active=True)

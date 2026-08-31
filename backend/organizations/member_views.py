@@ -1,8 +1,11 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
+from django_filters.rest_framework import DjangoFilterBackend
+
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
 )
 
 from rest_framework import generics
@@ -99,6 +102,17 @@ class OrganizationAdminAccessMixin:
         )
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=["Members"],
+        summary="List organization members",
+        description=(
+            "Returns members of the selected organization. "
+            "Only an active organization admin can access "
+            "this endpoint."
+        ),
+    ),
+)
 class OrganizationMemberListView(
     OrganizationAdminAccessMixin,
     generics.ListAPIView,
@@ -154,6 +168,17 @@ class OrganizationMemberDetailView(
         IsAuthenticated,
     ]
 
+    @extend_schema(
+        tags=["Members"],
+        summary="Get organization member",
+        description=(
+            "Returns details for one organization "
+            "membership."
+        ),
+        responses={
+            200: OrganizationMemberSerializer,
+        },
+    )
     def get(
         self,
         request,
@@ -172,6 +197,19 @@ class OrganizationMemberDetailView(
             serializer.data
         )
 
+    @extend_schema(
+        tags=["Members"],
+        summary="Update organization member",
+        description=(
+            "Changes the role or active state of an "
+            "organization member. The last active admin "
+            "cannot be deactivated or demoted."
+        ),
+        request=OrganizationMemberUpdateSerializer,
+        responses={
+            200: OrganizationMemberSerializer,
+        },
+    )
     def patch(
         self,
         request,
@@ -248,6 +286,19 @@ class OrganizationMemberDetailView(
             response_data
         )
 
+    @extend_schema(
+        tags=["Members"],
+        summary="Remove organization member",
+        description=(
+            "Removes an organization membership without "
+            "deleting the underlying user account. "
+            "The last active admin cannot be removed."
+        ),
+        request=None,
+        responses={
+            204: None,
+        },
+    )
     def delete(
         self,
         request,
