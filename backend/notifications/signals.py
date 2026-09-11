@@ -24,6 +24,8 @@ def store_previous_ticket_state(
     instance,
     **kwargs,
 ):
+    if kwargs.get("raw"):
+        return
     instance._previous_assigned_agent_id = None
     instance._previous_status = None
 
@@ -64,6 +66,8 @@ def create_ticket_notifications(
     created,
     **kwargs,
 ):
+    if kwargs.get("raw"):
+        return
     previous_assigned_agent_id = getattr(
         instance,
         "_previous_assigned_agent_id",
@@ -142,6 +146,8 @@ def create_new_message_notification(
     created,
     **kwargs,
 ):
+    if kwargs.get("raw"):
+        return
     if not created:
         return
 

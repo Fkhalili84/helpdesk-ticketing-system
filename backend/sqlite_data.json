@@ -1,0 +1,791 @@
+[
+{
+  "model": "admin.logentry",
+  "pk": 1,
+  "fields": {
+    "action_time": "2026-08-09T08:42:40.433Z",
+    "user": 1,
+    "content_type": 6,
+    "object_id": "2",
+    "object_repr": "customer1 (Customer)",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 2,
+  "fields": {
+    "action_time": "2026-08-09T08:43:13.394Z",
+    "user": 1,
+    "content_type": 6,
+    "object_id": "3",
+    "object_repr": "agent1 (Support Agent)",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 3,
+  "fields": {
+    "action_time": "2026-08-09T08:44:17.983Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "1",
+    "object_repr": "Technical",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 4,
+  "fields": {
+    "action_time": "2026-08-09T08:44:24.348Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "2",
+    "object_repr": "Payment",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 5,
+  "fields": {
+    "action_time": "2026-08-09T08:44:40.039Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "3",
+    "object_repr": "Account",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 6,
+  "fields": {
+    "action_time": "2026-08-09T08:44:44.503Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "4",
+    "object_repr": "Bug",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 7,
+  "fields": {
+    "action_time": "2026-08-09T08:45:36.185Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "1",
+    "object_repr": "#1 - Cannot login to my account",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 8,
+  "fields": {
+    "action_time": "2026-08-09T08:46:07.999Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "1",
+    "object_repr": "Message on Ticket #1 by customer1 (Customer)",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 9,
+  "fields": {
+    "action_time": "2026-08-09T16:56:13.574Z",
+    "user": 1,
+    "content_type": 12,
+    "object_id": "1",
+    "object_repr": "NexaCloud",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 10,
+  "fields": {
+    "action_time": "2026-08-09T16:56:42.599Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "1",
+    "object_repr": "agent1 - NexaCloud - Support Agent",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 11,
+  "fields": {
+    "action_time": "2026-08-09T17:41:14.848Z",
+    "user": 1,
+    "content_type": 12,
+    "object_id": "2",
+    "object_repr": "ABC Company",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 12,
+  "fields": {
+    "action_time": "2026-08-09T17:41:52.093Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "2",
+    "object_repr": "customer1 - ABC Company - Customer",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "tdahrqovqhbkr07fot49fipvo5l32qck",
+  "fields": {
+    "session_data": ".eJxVjDsOwjAQBe_iGlmsf2tT0ucM1vqHA8iW4qRC3B0ipYD2zcx7MU_bWv028uLnxC4M2Ol3CxQfue0g3andOo-9rcsc-K7wgw4-9ZSf18P9O6g06re2mIxGomIioVHFGkqqwNkJURSgBFQZXSAKBVEjkLYKk9QAQlplHXt_ANr-Nvw:1wsz5s:3Pg4TxP2fFlfI-v2qda-Wc9ZzlbFgzUAIF99-1bVOPA",
+    "expire_date": "2026-08-23T08:41:20.383Z"
+  }
+},
+{
+  "model": "users.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$dbn3b5VOEXa8czdsGLKwcG$BghAY4dlJ9cdwJUg6+7S75JMcWUAUQT/bmSIybLIbaQ=",
+    "last_login": "2026-08-09T08:41:20.378Z",
+    "is_superuser": true,
+    "username": "admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-08-09T08:40:36.047Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$FDBhFR3SilASjLyiYArSWN$bcFicjJnaNVrYbBlczas6bg3D+YI3WTfvL1tc11Axg8=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "customer1",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-09T08:42:40.033Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$7EeKz41Sqkiwh1aNcJbdHK$FqBRuxedw9MOmyzZVjgaW/LCSTQkAWRSJCbgVGblIBI=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "agent1",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-09T08:43:13.009Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 4,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$wG7S5IM0lbIfsawPQjiMFC$dWbOY3AV6ZvSIas0vNBmwokaKEal/PGAfLKrYnYbAsQ=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "customer2",
+    "first_name": "",
+    "last_name": "",
+    "email": "customer2@example.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-09T09:19:44.411Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 5,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$v0GvVX5UOH0K2CjbUN1Q3a$/3oz16EiTgcAbxFk+qDht1+1BSjiCS01xgp1K+78brQ=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "orgadmin1",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@nexacloud.test",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-15T15:06:24.839Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 6,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$YlVSN6orvWMKeYpNnIOvSB$vFOJ+M2716NfYfNs1J85Cw7MmH+DeNkNxczFbWZs7Go=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "newagent",
+    "first_name": "Reza",
+    "last_name": "Ahmadi",
+    "email": "newagent@nexacloud.test",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-15T15:09:54.555Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 7,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$YXO8X0G6zpL54X3MeG1qL1$VAd0IOiLxIJUVs4o78qvFVpFBO6tFMiiKRWVk0H48HM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "newcustomer",
+    "first_name": "Ali",
+    "last_name": "Ahmadi",
+    "email": "newcustomer@nexacloud.test",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-16T13:38:13.322Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 8,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$rhdZJ8gWCERmF2SpcTUCHQ$ThteCccKyEARZ4WHMRGUnHSBWlpXyHWsj4gwdX2UPRg=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "clouddesk_admin",
+    "first_name": "Sara",
+    "last_name": "Ahmadi",
+    "email": "admin@clouddesk.test",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-16T14:00:29.187Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 9,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$LOBYe2hBSaV9rzfuy9aO5o$iGpBqfjjPR4pMfGt8n/+5cOJ8ReRCfnly11HGMiLnWI=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "WwfgBFw5SXiIuGIb0jtlkA@Q+BGtHS.L2IOz36Z.vyUvDCWH2vWM1",
+    "first_name": "bahar",
+    "last_name": "bahar",
+    "email": "admin4@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-08-31T15:37:49.643Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "tickets.ticketcategory",
+  "pk": 1,
+  "fields": {
+    "organization": 1,
+    "name": "Technical",
+    "description": "",
+    "created_at": "2026-08-09T08:44:17.982Z"
+  }
+},
+{
+  "model": "tickets.ticketcategory",
+  "pk": 2,
+  "fields": {
+    "organization": 1,
+    "name": "Payment",
+    "description": "",
+    "created_at": "2026-08-09T08:44:24.346Z"
+  }
+},
+{
+  "model": "tickets.ticketcategory",
+  "pk": 3,
+  "fields": {
+    "organization": 1,
+    "name": "Account",
+    "description": "",
+    "created_at": "2026-08-09T08:44:40.038Z"
+  }
+},
+{
+  "model": "tickets.ticketcategory",
+  "pk": 4,
+  "fields": {
+    "organization": 1,
+    "name": "Bug",
+    "description": "",
+    "created_at": "2026-08-09T08:44:44.501Z"
+  }
+},
+{
+  "model": "tickets.ticket",
+  "pk": 1,
+  "fields": {
+    "title": "Cannot login to my account",
+    "description": "I receive an error when trying to login.",
+    "customer": 2,
+    "assigned_agent": 3,
+    "category": 3,
+    "priority": "high",
+    "status": "in_progress",
+    "created_at": "2026-08-09T08:45:36.183Z",
+    "updated_at": "2026-08-23T16:46:05.832Z",
+    "resolved_at": null,
+    "closed_at": null,
+    "organization": 1
+  }
+},
+{
+  "model": "tickets.ticket",
+  "pk": 2,
+  "fields": {
+    "title": "Cannot access my dashboard",
+    "description": "The dashboard returns an error after login.",
+    "customer": 4,
+    "assigned_agent": 3,
+    "category": 1,
+    "priority": "high",
+    "status": "in_progress",
+    "created_at": "2026-08-09T10:54:38.225Z",
+    "updated_at": "2026-08-09T15:39:48.191Z",
+    "resolved_at": null,
+    "closed_at": null,
+    "organization": 1
+  }
+},
+{
+  "model": "tickets.ticket",
+  "pk": 3,
+  "fields": {
+    "title": "string",
+    "description": "string",
+    "customer": 9,
+    "assigned_agent": 3,
+    "category": 1,
+    "priority": "high",
+    "status": "closed",
+    "created_at": "2026-08-31T15:43:14.434Z",
+    "updated_at": "2026-08-31T15:48:48.962Z",
+    "resolved_at": "2026-08-31T15:48:41.382Z",
+    "closed_at": "2026-08-31T15:48:48.961Z",
+    "organization": 1
+  }
+},
+{
+  "model": "tickets.tickethistory",
+  "pk": 1,
+  "fields": {
+    "ticket": 1,
+    "changed_by": 6,
+    "action": "status_changed",
+    "old_value": "open",
+    "new_value": "in_progress",
+    "created_at": "2026-08-23T16:44:55.678Z"
+  }
+},
+{
+  "model": "tickets.tickethistory",
+  "pk": 2,
+  "fields": {
+    "ticket": 3,
+    "changed_by": 1,
+    "action": "priority_changed",
+    "old_value": "medium",
+    "new_value": "low",
+    "created_at": "2026-08-31T15:47:48.790Z"
+  }
+},
+{
+  "model": "tickets.tickethistory",
+  "pk": 3,
+  "fields": {
+    "ticket": 3,
+    "changed_by": 1,
+    "action": "assigned_changed",
+    "old_value": null,
+    "new_value": "3",
+    "created_at": "2026-08-31T15:47:48.793Z"
+  }
+},
+{
+  "model": "tickets.tickethistory",
+  "pk": 4,
+  "fields": {
+    "ticket": 3,
+    "changed_by": 1,
+    "action": "priority_changed",
+    "old_value": "low",
+    "new_value": "high",
+    "created_at": "2026-08-31T15:48:20.690Z"
+  }
+},
+{
+  "model": "tickets.tickethistory",
+  "pk": 5,
+  "fields": {
+    "ticket": 3,
+    "changed_by": 1,
+    "action": "status_changed",
+    "old_value": "open",
+    "new_value": "in_progress",
+    "created_at": "2026-08-31T15:48:31.381Z"
+  }
+},
+{
+  "model": "tickets.tickethistory",
+  "pk": 6,
+  "fields": {
+    "ticket": 3,
+    "changed_by": 1,
+    "action": "status_changed",
+    "old_value": "in_progress",
+    "new_value": "resolved",
+    "created_at": "2026-08-31T15:48:41.393Z"
+  }
+},
+{
+  "model": "tickets.tickethistory",
+  "pk": 7,
+  "fields": {
+    "ticket": 3,
+    "changed_by": 1,
+    "action": "status_changed",
+    "old_value": "resolved",
+    "new_value": "closed",
+    "created_at": "2026-08-31T15:48:48.982Z"
+  }
+},
+{
+  "model": "tickets.ticketattachment",
+  "pk": 1,
+  "fields": {
+    "ticket": 3,
+    "uploaded_by": 1,
+    "file": "ticket_attachments/hhhhh.txt",
+    "file_name": "hhhhh.txt",
+    "file_size": 5,
+    "content_type": "text/plain",
+    "created_at": "2026-08-31T15:58:04.784Z"
+  }
+},
+{
+  "model": "tickets.ticketmessage",
+  "pk": 1,
+  "fields": {
+    "ticket": 1,
+    "sender": 2,
+    "message": "I have been unable to login since this morning.",
+    "created_at": "2026-08-09T08:46:07.997Z"
+  }
+},
+{
+  "model": "tickets.ticketmessage",
+  "pk": 2,
+  "fields": {
+    "ticket": 2,
+    "sender": 4,
+    "message": "The problem still happens after refreshing the page.",
+    "created_at": "2026-08-09T15:49:17.680Z"
+  }
+},
+{
+  "model": "tickets.ticketmessage",
+  "pk": 3,
+  "fields": {
+    "ticket": 2,
+    "sender": 3,
+    "message": "I am investigating the dashboard issue now.",
+    "created_at": "2026-08-09T15:51:14.240Z"
+  }
+},
+{
+  "model": "tickets.ticketmessage",
+  "pk": 4,
+  "fields": {
+    "ticket": 3,
+    "sender": 1,
+    "message": "hhhhhh",
+    "created_at": "2026-08-31T15:51:06.854Z"
+  }
+},
+{
+  "model": "organizations.organization",
+  "pk": 1,
+  "fields": {
+    "name": "NexaCloud",
+    "slug": "nexacloud",
+    "created_by": 1,
+    "is_active": true,
+    "created_at": "2026-08-09T16:56:13.573Z",
+    "updated_at": "2026-08-09T16:56:13.573Z"
+  }
+},
+{
+  "model": "organizations.organization",
+  "pk": 2,
+  "fields": {
+    "name": "ABC Company",
+    "slug": "abc",
+    "created_by": null,
+    "is_active": true,
+    "created_at": "2026-08-09T17:41:14.846Z",
+    "updated_at": "2026-08-09T17:41:14.846Z"
+  }
+},
+{
+  "model": "organizations.organization",
+  "pk": 3,
+  "fields": {
+    "name": "CloudDesk",
+    "slug": "clouddesk",
+    "created_by": 8,
+    "is_active": true,
+    "created_at": "2026-08-16T14:00:29.582Z",
+    "updated_at": "2026-08-16T14:00:29.582Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 1,
+  "fields": {
+    "organization": 1,
+    "user": 3,
+    "role": "agent",
+    "is_active": true,
+    "joined_at": "2026-08-09T16:56:42.597Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 2,
+  "fields": {
+    "organization": 2,
+    "user": 2,
+    "role": "customer",
+    "is_active": true,
+    "joined_at": "2026-08-09T17:41:52.091Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 3,
+  "fields": {
+    "organization": 1,
+    "user": 5,
+    "role": "admin",
+    "is_active": true,
+    "joined_at": "2026-08-15T15:06:26.488Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 4,
+  "fields": {
+    "organization": 1,
+    "user": 6,
+    "role": "agent",
+    "is_active": true,
+    "joined_at": "2026-08-15T15:09:54.957Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 5,
+  "fields": {
+    "organization": 1,
+    "user": 7,
+    "role": "customer",
+    "is_active": true,
+    "joined_at": "2026-08-16T13:38:13.835Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 6,
+  "fields": {
+    "organization": 3,
+    "user": 8,
+    "role": "admin",
+    "is_active": true,
+    "joined_at": "2026-08-16T14:00:29.582Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 7,
+  "fields": {
+    "organization": 1,
+    "user": 1,
+    "role": "admin",
+    "is_active": true,
+    "joined_at": "2026-08-31T15:21:57.501Z"
+  }
+},
+{
+  "model": "organizations.organizationmembership",
+  "pk": 8,
+  "fields": {
+    "organization": 1,
+    "user": 9,
+    "role": "customer",
+    "is_active": true,
+    "joined_at": "2026-08-31T15:37:50.142Z"
+  }
+},
+{
+  "model": "organizations.organizationinvitation",
+  "pk": 1,
+  "fields": {
+    "organization": 1,
+    "email": "newagent@nexacloud.test",
+    "role": "agent",
+    "token": "f75290a3-50f8-4307-af0a-f4cc08eb87a4",
+    "invited_by": 5,
+    "expires_at": "2026-08-22T15:08:04.571Z",
+    "accepted_at": "2026-08-15T15:09:54.958Z",
+    "created_at": "2026-08-15T15:08:04.571Z"
+  }
+},
+{
+  "model": "organizations.organizationinvitation",
+  "pk": 2,
+  "fields": {
+    "organization": 3,
+    "email": "agent@clouddesk.test",
+    "role": "agent",
+    "token": "d7b71d4e-7319-4e5f-8e19-bf3b00a70eb9",
+    "invited_by": 8,
+    "expires_at": "2026-08-23T14:01:49.578Z",
+    "accepted_at": null,
+    "created_at": "2026-08-16T14:01:49.578Z"
+  }
+},
+{
+  "model": "notifications.notification",
+  "pk": 1,
+  "fields": {
+    "organization": 1,
+    "recipient": 3,
+    "actor": null,
+    "ticket": 3,
+    "notification_type": "ticket_assigned",
+    "title": "Ticket assigned",
+    "message": "Ticket \"string\" has been assigned to you.",
+    "is_read": false,
+    "created_at": "2026-08-31T15:47:48.786Z",
+    "read_at": null
+  }
+},
+{
+  "model": "notifications.notification",
+  "pk": 2,
+  "fields": {
+    "organization": 1,
+    "recipient": 9,
+    "actor": null,
+    "ticket": 3,
+    "notification_type": "status_changed",
+    "title": "Ticket status changed",
+    "message": "Ticket \"string\" status changed to In Progress.",
+    "is_read": false,
+    "created_at": "2026-08-31T15:48:31.377Z",
+    "read_at": null
+  }
+},
+{
+  "model": "notifications.notification",
+  "pk": 3,
+  "fields": {
+    "organization": 1,
+    "recipient": 9,
+    "actor": null,
+    "ticket": 3,
+    "notification_type": "status_changed",
+    "title": "Ticket status changed",
+    "message": "Ticket \"string\" status changed to Resolved.",
+    "is_read": false,
+    "created_at": "2026-08-31T15:48:41.388Z",
+    "read_at": null
+  }
+},
+{
+  "model": "notifications.notification",
+  "pk": 4,
+  "fields": {
+    "organization": 1,
+    "recipient": 9,
+    "actor": null,
+    "ticket": 3,
+    "notification_type": "status_changed",
+    "title": "Ticket status changed",
+    "message": "Ticket \"string\" status changed to Closed.",
+    "is_read": false,
+    "created_at": "2026-08-31T15:48:48.979Z",
+    "read_at": null
+  }
+},
+{
+  "model": "notifications.notification",
+  "pk": 5,
+  "fields": {
+    "organization": 1,
+    "recipient": 9,
+    "actor": 1,
+    "ticket": 3,
+    "notification_type": "new_message",
+    "title": "New ticket message",
+    "message": "New message on ticket \"string\".",
+    "is_read": false,
+    "created_at": "2026-08-31T15:51:06.866Z",
+    "read_at": null
+  }
+}
+]
